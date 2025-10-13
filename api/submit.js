@@ -17,7 +17,10 @@ export default async function handler(request, response) {
   }
 
   try {
+    console.log("API execution started.");
+
     // --- Authenticate with Google ---
+    console.log("Step 1: Authenticating with Google...");
     const auth = new google.auth.GoogleAuth({
         credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -30,20 +33,27 @@ export default async function handler(request, response) {
     });
     const sheets = google.sheets({ version: 'v4', auth });
     const drive = google.drive({ version: 'v3', auth });
+    console.log("Authentication successful.");
 
+    console.log("Step 2: Parsing form data...");
     const { fields, files } = await parseForm(request);
+    console.log("Form parsing successful. Student name:", fields.student_name);
     
-    // --- Generate a Unique Student ID ---
+    console.log("Step 3: Generating Student ID...");
     const studentId = await generateStudentIdFromSheet(sheets);
+    console.log("Student ID generated:", studentId);
 
-    // --- Create a dedicated folder for the student in Google Drive ---
+    console.log("Step 4: Creating Google Drive folder...");
     const studentFolderId = await createStudentFolder(drive, studentId, fields.student_name);
+    console.log("Drive folder created with ID:", studentFolderId);
 
-    // --- Upload all files to that student's folder ---
+    console.log("Step 5: Uploading files to Google Drive...");
     const fileLinks = await uploadFilesToDrive(drive, files, studentFolderId);
+    console.log("File uploads successful. Links:", fileLinks);
     
-    // --- Save all text data and file links to Google Sheet ---
+    console.log("Step 6: Saving data to Google Sheet...");
     await saveDataToSheet(sheets, { ...fields, ...fileLinks, student_id: studentId });
+    console.log("Data saved to sheet successfully.");
 
     return response.status(200).json({
         message: 'Application submitted successfully!',
@@ -51,15 +61,18 @@ export default async function handler(request, response) {
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    // This will log the detailed error to your Vercel logs
+    console.error('--- API ERROR ---');
+    console.error('Error Message:', error.message);
+    console.error('Full Error Object:', error);
+    console.error('--- END OF ERROR ---');
     return response.status(500).json({ error: 'Internal Server Error' });
   }
 }
 
-
 // --- Helper Functions ---
+// (The helper functions below are the same as before, no changes needed there)
 
-// Parses the incoming form data and files
 async function parseForm(request) {
     const form = formidable({});
     const [fields, files] = await form.parse(request);
@@ -67,7 +80,6 @@ async function parseForm(request) {
     return { fields: singleValueFields, files };
 }
 
-// Generates an ID like "1VJ25001"
 async function generateStudentIdFromSheet(sheets) {
     const timeResponse = await fetch('http://worldtimeapi.org/api/timezone/Asia/Kolkata');
     if (!timeResponse.ok) throw new Error('Failed to fetch current time');
@@ -77,7 +89,7 @@ async function generateStudentIdFromSheet(sheets) {
 
     const res = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: 'Sheet1!A:A', // Assumes Student IDs are in the first column (A)
+        range: 'Sheet1!A:A',
     });
 
     const lastId = res.data.values ? res.data.values[res.data.values.length - 1][0] : null;
@@ -88,11 +100,10 @@ async function generateStudentIdFromSheet(sheets) {
     return `${prefix}${String(newSerial).padStart(3, '0')}`;
 }
 
-// Creates a new folder in Google Drive for the student
 async function createStudentFolder(drive, studentId, studentName) {
     const folderMetadata = {
         name: `${studentId} - ${studentName}`,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID], // The main "College Admissions" folder
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
         mimeType: 'application/vnd.google-apps.folder',
     };
     const folder = await drive.files.create({
@@ -102,7 +113,6 @@ async function createStudentFolder(drive, studentId, studentName) {
     return folder.data.id;
 }
 
-// Uploads files to the specified Google Drive folder
 async function uploadFilesToDrive(drive, files, parentFolderId) {
     const links = {};
     for (const key in files) {
@@ -116,26 +126,24 @@ async function uploadFilesToDrive(drive, files, parentFolderId) {
                 media: media,
                 fields: 'id, webViewLink',
             });
-            links[`${key}_url`] = driveFile.data.webViewLink; // Link for viewing the file
+            links[`${key}_url`] = driveFile.data.webViewLink;
         }
     }
     return links;
 }
 
-// Appends a new row to the Google Sheet
 async function saveDataToSheet(sheets, data) {
-    // IMPORTANT: Make sure the columns in your Google Sheet match this order
     const headers = [
         'student_id', 'student_name', 'dob', 'father_name', 'mother_name', 
         'mobile_number', 'parent_mobile_number', 'email', 'previous_college', 
         'previous_combination', 'permanent_address', 'category', 'sub_caste', 
-        'admission_through', 'cet_number', 'seat_allotted', 'allotted_branch', 
+        'admission_through', 'cet_number', 'seat_allotted', 'allotted_branch_kea', 'allotted_branch_management',
         'cet_rank', 'photo_url', 'marks_card_url', 'aadhaar_front_url', 
         'aadhaar_back_url', 'caste_income_url', 'submission_date'
     ];
 
-    const row = headers.map(header => data[header] || ''); // Map data to headers, leave blank if not present
-    row[headers.indexOf('submission_date')] = new Date().toISOString(); // Add current timestamp
+    const row = headers.map(header => data[header] || '');
+    row[headers.indexOf('submission_date')] = new Date().toISOString();
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
