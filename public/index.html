@@ -7,34 +7,119 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
+        <button class="header-btn">College Details</button>
+    </header>
     <div class="container">
-        <h1 class="animated-title">Vijay Vittal Institute of Technology</h1>
+        <h1>Student Registration</h1>
         <form id="page1Form">
-            <div class="form-step active" data-step="0">
-                <label for="student_name">What is your full name?</label>
-                <input type="text" id="student_name" name="student_name" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
+            <label for="student_name">Student Name</label>
+            <input type="text" id="student_name" name="student_name" required>
+
+            <label for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="dob" required>
+
+            <label for="father_name">Father's Name</label>
+            <input type="text" id="father_name" name="father_name" required>
+
+            <label for="mother_name">Mother's Name</label>
+            <input type="text" id="mother_name" name="mother_name" required>
+
+            <label for="mobile_number">Mobile Number</label>
+            <input type="tel" id="mobile_number" name="mobile_number" required>
+
+            <label for="parent_mobile_number">Father/Mother/Guardian Mobile Number</label>
+            <input type="tel" id="parent_mobile_number" name="parent_mobile_number" required>
+
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="permanent_address">Permanent Address</label>
+            <textarea id="permanent_address" name="permanent_address" rows="3" required></textarea>
+
+            <label for="previous_college">Previous Year College Name</label>
+            <input type="text" id="previous_college" name="previous_college" required>
+
+            <label for="previous_combination">Previous Year Combination</label>
+            <select id="previous_combination" name="previous_combination" required>
+                <option value="">--Select--</option>
+                <option value="PCMB">PCMB</option>
+                <option value="PCMC">PCMC</option>
+                <option value="DIPLOMA">DIPLOMA (Lateral Entry)</option>
+            </select>
+
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="">--Select--</option>
+                <option value="CAT 1">CAT 1</option>
+                <option value="2A">2A</option>
+                <option value="2B">2B</option>
+                <option value="3A">3A</option>
+                <option value="3B">3B</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="NOT APPLICABLE">NOT APPLICABLE</option>
+            </select>
+
+            <label for="sub_caste">Sub Caste (e.g., Lingayat, Reddy)</label>
+            <input type="text" id="sub_caste" name="sub_caste" required>
+
+            <fieldset>
+                <legend>Admission Through</legend>
+                <input type="radio" id="kea" name="admission_through" value="KEA" required>
+                <label for="kea">KEA</label>
+                <input type="radio" id="management" name="admission_through" value="MANAGEMENT">
+                <label for="management">MANAGEMENT</label>
+            </fieldset>
+
+            <div id="keaFields" class="hidden">
+                <label for="cet_number">CET Number</label>
+                <input type="text" id="cet_number" name="cet_number">
+                <label for="seat_allotted">Seat Allotted</label>
+                <select id="seat_allotted" name="seat_allotted">
+                    <option value="">--Select Seat--</option>
+                    <option value="SNQ">SNQ</option>
+                    <option value="GM">GM</option>
+                    <option value="SC">SC</option>
+                    <option value="ST">ST</option>
+                    <option value="OBC">OBC</option>
+                    <option value="GMR">GMR</option>
+                    <option value="GMK">GMK</option>
+                    <option value="KK / HK">KK / HK</option>
+                    <option value="EWS">EWS</option>
+                    <option value="SPL">SPL (NCC, SPORTS, DEFENCE, PWD)</option>
+                </select>
+                <label for="allotted_branch_kea">Allotted Branch</label>
+                <select id="allotted_branch_kea" name="allotted_branch_kea">
+                     <option value="">--Select Branch--</option>
+                    <option value="CSE">CSE</option>
+                    <option value="AIML">AIML</option>
+                    <option value="CS In (AIML)">CS In (AIML)</option>
+                    <option value="CS (DS)">CS (DS)</option>
+                    <option value="EC">EC</option>
+                    <option value="CV">CV</option>
+                    <option value="ME">ME</option>
+                </select>
+                <label for="cet_rank">CET Rank</label>
+                <input type="text" id="cet_rank" name="cet_rank">
             </div>
 
-            <div class="form-step" data-step="1">
-                <label for="dob">What is your Date of Birth?</label>
-                <input type="date" id="dob" name="dob" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
-            </div>
-
-            <div class="form-step" data-step="2">
-                <label for="father_name">Father's Name</label>
-                <input type="text" id="father_name" name="father_name" required>
-                 <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
+            <div id="managementFields" class="hidden">
+                <label for="allotted_branch_management">Directly Allotted Branch</label>
+                <select id="allotted_branch_management" name="allotted_branch_management">
+                    <option value="">--Select Branch--</option>
+                    <option value="CSE">CSE</option>
+                    <option value="AIML">AIML</option>
+                    <option value="CS In (AIML)">CS In (AIML)</option>
+                    <option value="CS (DS)">CS (DS)</option>
+                    <option value="EC">EC</option>
+                    <option value="CV">CV</option>
+                    <option value="ME">ME</option>
+                </select>
             </div>
             
-            </form>
+            <button type="submit">Proceed to Uploads</button>
+        </form>
     </div>
     <script src="script.js"></script>
 </body>
