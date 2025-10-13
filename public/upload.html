@@ -8,59 +8,161 @@
 </head>
 <body>
     <div class="container">
-        <h1>Student Registration - Step 2</h1>
+        <h2>Document Upload</h2>
         <form id="page2Form">
-            <div class="form-step active" data-step="0">
-                <label for="photo">Upload your Passport Size Photo (JPG/JPEG)</label>
-                <input type="file" id="photo" name="photo" accept=".jpg, .jpeg" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
+
+            <!-- Custom File Input for Photo -->
+            <div class="file-input-wrapper">
+                <label>Passport Size Photo (JPG/JPEG)</label>
+                <div class="file-input-container">
+                    <input type="file" id="photo" name="photo" accept=".jpg, .jpeg" required>
+                    <label for="photo" class="file-input-label">Choose File</label>
+                    <span class="file-name">No file chosen</span>
                 </div>
             </div>
 
-            <div class="form-step" data-step="1">
-                <label for="marks_card">Upload your Previous Year Marks Cards (PDF)</label>
-                <p class="note">Note: Diploma students must upload all semester marks cards in a single PDF.</p>
-                <input type="file" id="marks_card" name="marks_card" accept=".pdf" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
-            </div>
-
-            <div class="form-step" data-step="2">
-                <label for="aadhaar_front">Upload Aadhaar Card - Front Side</label>
-                <input type="file" id="aadhaar_front" name="aadhaar_front" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
-            </div>
-
-            <div class="form-step" data-step="3">
-                <label for="aadhaar_back">Upload Aadhaar Card - Back Side</label>
-                <input type="file" id="aadhaar_back" name="aadhaar_back" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
+            <!-- Custom File Input for Marks Card -->
+            <div class="file-input-wrapper">
+                <label>Previous Year Marks Cards (PDF)</label>
+                <p class="note">Diploma students must upload all semester marks cards in a single PDF.</p>
+                <div class="file-input-container">
+                    <input type="file" id="marks_card" name="marks_card" accept=".pdf" required>
+                    <label for="marks_card" class="file-input-label">Choose File</label>
+                    <span class="file-name">No file chosen</span>
                 </div>
             </div>
             
-            <div id="casteIncomeSection" class="form-step" data-step="4">
-                <label for="caste_income">Upload Caste and Income Certificate (PDF)</label>
-                <input type="file" id="caste_income" name="caste_income" accept=".pdf">
-                <div class="button-container">
-                    <button type="submit" class="next-btn">Submit Application</button>
-                </div>
-            </div>
-            
-            <div id="finalSubmitSection" class="form-step" data-step="5">
-                <p>You're all set!</p>
-                <div class="button-container">
-                    <button type="submit" class="next-btn">Submit Application</button>
+            <!-- Custom File Input for Aadhaar Front -->
+            <div class="file-input-wrapper">
+                <label>Aadhaar Card - Front Side</label>
+                <div class="file-input-container">
+                    <input type="file" id="aadhaar_front" name="aadhaar_front" required>
+                    <label for="aadhaar_front" class="file-input-label">Choose File</label>
+                    <span class="file-name">No file chosen</span>
                 </div>
             </div>
 
+            <!-- Custom File Input for Aadhaar Back -->
+            <div class="file-input-wrapper">
+                <label>Aadhaar Card - Back Side</label>
+                <div class="file-input-container">
+                    <input type="file" id="aadhaar_back" name="aadhaar_back" required>
+                    <label for="aadhaar_back" class="file-input-label">Choose File</label>
+                    <span class="file-name">No file chosen</span>
+                </div>
+            </div>
+            
+            <!-- Custom File Input for Caste/Income (Conditional) -->
+            <div id="casteIncomeSection" class="file-input-wrapper hidden">
+                <label>Caste and Income Certificate (PDF)</label>
+                <div class="file-input-container">
+                    <input type="file" id="caste_income" name="caste_income" accept=".pdf">
+                    <label for="caste_income" class="file-input-label">Choose File</label>
+                    <span class="file-name">No file chosen</span>
+                </div>
+            </div>
+
+            <button type="submit">Submit Application</button>
             <p id="submit-status"></p>
         </form>
     </div>
     <script src="script.js"></script>
 </body>
 </html>
+```
+
+---
+
+### ## 2. Update `public/style.css`
+
+Add the following new CSS rules to the bottom of your `style.css` file. This code hides the ugly default file input and styles our new custom button.
+
+```css
+/* Custom File Input Styling */
+.file-input-wrapper {
+    margin-bottom: 20px;
+}
+
+.file-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 45px;
+}
+
+.file-input-container input[type="file"] {
+    /* Hide the default browser input */
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-input-label {
+    /* Style the custom "Choose File" button */
+    background-color: var(--cool-gray);
+    color: var(--space-cadet);
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: background-color 0.3s;
+}
+.file-input-label:hover {
+    background-color: var(--antiflash-white);
+}
+
+.file-name {
+    /* Style the text that shows the selected file's name */
+    margin-left: 15px;
+    color: var(--antiflash-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+}
+
+/* Additional style for the h2 title on the upload page */
+h2 {
+    text-align: center;
+    color: var(--antiflash-white);
+    font-weight: 400;
+}
+```
+
+---
+
+### ## 3. Update `public/script.js`
+
+Finally, we need to add a small piece of JavaScript to make the custom file inputs show the name of the selected file.
+
+In your `script.js` file, find the `setupPage2()` function. Add the new code block (marked below) inside it.
+
+```javascript
+function setupPage2() {
+    const form = document.getElementById('page2Form');
+    const casteIncomeSection = document.getElementById('casteIncomeSection');
+    const casteIncomeInput = document.getElementById('caste_income');
+    const submitStatus = document.getElementById('submit-status');
+
+    // --- ADD THIS NEW CODE BLOCK ---
+    // This makes the custom file inputs show the selected file name.
+    const allFileInputs = form.querySelectorAll('input[type="file"]');
+    allFileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const fileNameSpan = this.nextElementSibling.nextElementSibling;
+            if (this.files.length > 0) {
+                fileNameSpan.textContent = this.files[0].name;
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+            }
+        });
+    });
+    // --- END OF NEW CODE BLOCK ---
+
+    const page1Data = JSON.parse(localStorage.getItem('registrationDataP1'));
+    // ... the rest of your setupPage2() function remains the same
+}
