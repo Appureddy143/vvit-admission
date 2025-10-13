@@ -85,49 +85,58 @@ function setupPage2() {
     }
     
     // Handle the final form submission
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitStatus.textContent = 'Submitting, please wait... This may take a moment.';
+   form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
 
-        const finalFormData = new FormData();
-        for (const key in page1Data) {
-            finalFormData.append(key, page1Data[key]);
-        }
-        
-        const page2FileInputs = form.querySelectorAll('input[type="file"]');
-        page2FileInputs.forEach(input => {
-            if (input.files[0]) {
-                if (input.files[0].size > 1 * 1024 * 1024) { // 1MB validation
-                    alert(`File ${input.files[0].name} is too large. Maximum size is 1MB.`);
-                    submitButton.disabled = false;
-                    submitStatus.textContent = '';
-                    return;
-                }
-                finalFormData.append(input.name, input.files[0]);
-            }
-        });
+    const modal = document.getElementById('submissionModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalLoading = document.getElementById('modalLoading');
+    const downloadPDF = document.getElementById('downloadPDF');
+    const closeModal = document.getElementById('closeModal');
 
-        try {
-            const response = await fetch('/api/submit', {
-                method: 'POST',
-                body: finalFormData
-            });
-            const result = await response.json();
+    modal.classList.remove('hidden');
+    modalMessage.textContent = 'Uploading documents... This may take several minutes.';
+    modalLoading.classList.remove('hidden');
+    downloadPDF.classList.add('hidden');
+    closeModal.classList.add('hidden');
 
-            if (!response.ok) throw new Error(result.error || 'Submission failed.');
-            
-            localStorage.removeItem('registrationDataP1');
-            alert(`Submission successful! Your Admission ID is: ${result.studentId}`);
-            
+    const finalFormData = new FormData();
+    const page1Data = JSON.parse(localStorage.getItem('registrationDataP1'));
+    for (const key in page1Data) finalFormData.append(key, page1Data[key]);
+
+    form.querySelectorAll('input[type="file"]').forEach(input => {
+        if (input.files[0]) finalFormData.append(input.name, input.files[0]);
+    });
+
+    try {
+        const response = await fetch('/api/submit', { method: 'POST', body: finalFormData });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Submission failed.');
+        localStorage.removeItem('registrationDataP1');
+
+        modalLoading.classList.add('hidden');
+        modalMessage.textContent = `Submission successful! Your Admission ID is: ${result.studentId}`;
+
+        downloadPDF.href = result.pdfUrl;
+        downloadPDF.classList.remove('hidden');
+
+        downloadPDF.addEventListener('click', () => {
             const whatsappMessage = `Thank you for registering. Your Admission ID is ${result.studentId}.`;
             const studentPhone = page1Data.mobile_number.replace(/\D/g, '');
-            window.location.href = `https://wa.me/91${studentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+            window.open(`https://wa.me/91${studentPhone}?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+        });
 
-        } catch (error) {
-            submitStatus.textContent = `Error: ${error.message}`;
-            submitButton.disabled = false;
-        }
-    });
-}
+        closeModal.classList.remove('hidden');
+        closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+    } catch (error) {
+        modalLoading.classList.add('hidden');
+        modalMessage.textContent = `Error: ${error.message}`;
+        closeModal.classList.remove('hidden');
+        closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+    } finally {
+        submitButton.disabled = false;
+    }
+});
