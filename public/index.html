@@ -10,19 +10,12 @@
     <header>
         <button class="header-btn">College Details</button>
     </header>
+
     <div class="container">
         <h1 class="animated-title">Vijay Vittal Institute of Technology</h1>
-        <form id="page1Form">
-            <label for="student_name">Student Name</label>
-            <input type="text" id="student_name" name="student_name" required>
+        <h2>Student Registration</h2>
 
-            <button type="submit">Proceed to Uploads</button>
-        </form>
-    </div>
-    <script src="script.js"></script>
-    <div class="container">
-        <h1>Student Registration</h1>
-        <form id="page1Form">
+        <form id="registrationForm">
             <label for="student_name">Student Name</label>
             <input type="text" id="student_name" name="student_name" required>
 
@@ -82,9 +75,11 @@
                 <label for="management">MANAGEMENT</label>
             </fieldset>
 
+            <!-- KEA Fields -->
             <div id="keaFields" class="hidden">
                 <label for="cet_number">CET Number</label>
                 <input type="text" id="cet_number" name="cet_number">
+
                 <label for="seat_allotted">Seat Allotted</label>
                 <select id="seat_allotted" name="seat_allotted">
                     <option value="">--Select Seat--</option>
@@ -99,9 +94,10 @@
                     <option value="EWS">EWS</option>
                     <option value="SPL">SPL (NCC, SPORTS, DEFENCE, PWD)</option>
                 </select>
+
                 <label for="allotted_branch_kea">Allotted Branch</label>
                 <select id="allotted_branch_kea" name="allotted_branch_kea">
-                     <option value="">--Select Branch--</option>
+                    <option value="">--Select Branch--</option>
                     <option value="CSE">CSE</option>
                     <option value="AIML">AIML</option>
                     <option value="CS In (AIML)">CS In (AIML)</option>
@@ -110,10 +106,12 @@
                     <option value="CV">CV</option>
                     <option value="ME">ME</option>
                 </select>
+
                 <label for="cet_rank">CET Rank</label>
                 <input type="text" id="cet_rank" name="cet_rank">
             </div>
 
+            <!-- Management Fields -->
             <div id="managementFields" class="hidden">
                 <label for="allotted_branch_management">Directly Allotted Branch</label>
                 <select id="allotted_branch_management" name="allotted_branch_management">
@@ -127,10 +125,11 @@
                     <option value="ME">ME</option>
                 </select>
             </div>
-            
+
             <button type="submit">Proceed to Uploads</button>
         </form>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
