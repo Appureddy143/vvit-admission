@@ -5,7 +5,8 @@
     "googleapis": "^140.0.1",
     "google-auth-library": "^9.11.0",
     "formidable": "^3.5.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "pdf-lib": "^1.17.1"
   },
   "type": "module"
 }
