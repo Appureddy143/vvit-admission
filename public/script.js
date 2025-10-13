@@ -9,39 +9,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupPage1() {
     const form = document.getElementById('page1Form');
-    const steps = Array.from(form.querySelectorAll('.form-step'));
-    const nextButtons = form.querySelectorAll('.next-btn');
-    let currentStep = 0;
+    const keaRadio = document.getElementById('kea');
+    const managementRadio = document.getElementById('management');
+    const keaFields = document.getElementById('keaFields');
+    const managementFields = document.getElementById('managementFields');
 
-    function showStep(stepIndex) {
-        steps.forEach((step, index) => {
-            step.classList.toggle('active', index === stepIndex);
-        });
+    // Helper function to set required attribute on inputs
+    function setRequired(section, isRequired) {
+        const inputs = section.querySelectorAll('input, select');
+        inputs.forEach(input => { input.required = isRequired; });
     }
 
-    function goToNextStep() {
-        const currentStepElement = steps[currentStep];
-        const input = currentStepElement.querySelector('input, select, textarea');
-        if (input && input.required && !input.value) {
-            alert('This field is required before you can continue.');
-            return;
-        }
-        if (currentStep < steps.length - 1) {
-            currentStep++;
-            showStep(currentStep);
-        }
-    }
-
-    nextButtons.forEach(button => {
-        if (button.type !== 'submit') {
-            button.addEventListener('click', goToNextStep);
+    // Show/hide conditional fields based on "Admission Through"
+    keaRadio.addEventListener('change', () => {
+        if (keaRadio.checked) {
+            keaFields.classList.remove('hidden');
+            managementFields.classList.add('hidden');
+            setRequired(keaFields, true);
+            setRequired(managementFields, false);
         }
     });
 
-    form.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            steps[currentStep].querySelector('.next-btn').click();
+    managementRadio.addEventListener('change', () => {
+        if (managementRadio.checked) {
+            managementFields.classList.remove('hidden');
+            keaFields.classList.add('hidden');
+            setRequired(managementFields, true);
+            setRequired(keaFields, false);
         }
     });
 
@@ -52,19 +46,13 @@ function setupPage1() {
         localStorage.setItem('registrationDataP1', JSON.stringify(data));
         window.location.href = 'upload.html';
     });
-    
-    showStep(currentStep); // Show the first step on page load
 }
 
 function setupPage2() {
     const form = document.getElementById('page2Form');
-    const steps = Array.from(form.querySelectorAll('.form-step'));
-    const nextButtons = form.querySelectorAll('.next-btn');
     const casteIncomeSection = document.getElementById('casteIncomeSection');
-    const finalSubmitSection = document.getElementById('finalSubmitSection');
     const casteIncomeInput = document.getElementById('caste_income');
     const submitStatus = document.getElementById('submit-status');
-    let currentStep = 0;
 
     // Get data from the first page
     const page1Data = JSON.parse(localStorage.getItem('registrationDataP1'));
@@ -73,49 +61,13 @@ function setupPage2() {
         return;
     }
 
-    // Conditionally handle the caste certificate step
-    const needsCasteCert = page1Data.category && page1Data.category !== 'NOT APPLICABLE';
-    if (needsCasteCert) {
+    // Conditionally show the caste certificate upload field
+    if (page1Data.category && page1Data.category !== 'NOT APPLICABLE') {
+        casteIncomeSection.classList.remove('hidden');
         casteIncomeInput.required = true;
-        finalSubmitSection.remove(); // Remove the alternate final step
-    } else {
-        casteIncomeSection.remove(); // Remove the caste/income step
     }
     
-    const visibleSteps = Array.from(form.querySelectorAll('.form-step')); // Recalculate steps after removing one
-
-    function showStep(stepIndex) {
-        visibleSteps.forEach((step, index) => {
-            step.classList.toggle('active', index === stepIndex);
-        });
-    }
-
-    function goToNextStep() {
-        const currentStepElement = visibleSteps[currentStep];
-        const input = currentStepElement.querySelector('input');
-        if (input && input.required && !input.value) {
-            alert('This field is required before you can continue.');
-            return;
-        }
-        if (currentStep < visibleSteps.length - 1) {
-            currentStep++;
-            showStep(currentStep);
-        }
-    }
-
-    nextButtons.forEach(button => {
-        if (button.type !== 'submit') {
-            button.addEventListener('click', goToNextStep);
-        }
-    });
-    
-    form.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            visibleSteps[currentStep].querySelector('.next-btn').click();
-        }
-    });
-
+    // Handle the final form submission
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = form.querySelector('button[type="submit"]');
@@ -130,6 +82,12 @@ function setupPage2() {
         const page2FileInputs = form.querySelectorAll('input[type="file"]');
         page2FileInputs.forEach(input => {
             if (input.files[0]) {
+                if (input.files[0].size > 1 * 1024 * 1024) { // 1MB validation
+                    alert(`File ${input.files[0].name} is too large. Maximum size is 1MB.`);
+                    submitButton.disabled = false;
+                    submitStatus.textContent = '';
+                    return;
+                }
                 finalFormData.append(input.name, input.files[0]);
             }
         });
@@ -146,7 +104,6 @@ function setupPage2() {
             localStorage.removeItem('registrationDataP1');
             alert(`Submission successful! Your Admission ID is: ${result.studentId}`);
             
-            // Redirect to WhatsApp
             const whatsappMessage = `Thank you for registering. Your Admission ID is ${result.studentId}.`;
             const studentPhone = page1Data.mobile_number.replace(/\D/g, '');
             window.location.href = `https://wa.me/91${studentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -156,6 +113,4 @@ function setupPage2() {
             submitButton.disabled = false;
         }
     });
-
-    showStep(currentStep); // Show the first step on page load
 }
