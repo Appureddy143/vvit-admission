@@ -14,13 +14,15 @@ function setupPage1() {
     const keaFields = document.getElementById('keaFields');
     const managementFields = document.getElementById('managementFields');
 
-    // Helper function to set required attribute on inputs
+    // Helper function to set the 'required' attribute on inputs
     function setRequired(section, isRequired) {
         const inputs = section.querySelectorAll('input, select');
-        inputs.forEach(input => { input.required = isRequired; });
+        inputs.forEach(input => {
+            input.required = isRequired;
+        });
     }
 
-    // Show/hide conditional fields based on "Admission Through"
+    // It listens for a change on the radio buttons.
     keaRadio.addEventListener('change', () => {
         if (keaRadio.checked) {
             keaFields.classList.remove('hidden');
@@ -39,6 +41,7 @@ function setupPage1() {
         }
     });
 
+    // This part handles the form submission
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(form);
@@ -53,6 +56,20 @@ function setupPage2() {
     const casteIncomeSection = document.getElementById('casteIncomeSection');
     const casteIncomeInput = document.getElementById('caste_income');
     const submitStatus = document.getElementById('submit-status');
+
+    // This makes the custom file inputs show the selected file name.
+    const allFileInputs = form.querySelectorAll('input[type="file"]');
+    allFileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Find the span that shows the file name
+            const fileNameSpan = this.parentElement.querySelector('.file-name');
+            if (this.files.length > 0) {
+                fileNameSpan.textContent = this.files[0].name;
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+            }
+        });
+    });
 
     // Get data from the first page
     const page1Data = JSON.parse(localStorage.getItem('registrationDataP1'));
