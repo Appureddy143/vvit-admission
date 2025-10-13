@@ -1,15 +1,22 @@
 /* Import a handwriting font for the animation */
 @import url('https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap');
 
+/* Color Palette Definition */
+:root {
+    --space-cadet: #2b2d42;
+    --cool-gray: #8d99ae;
+    --antiflash-white: #edf2f4;
+    --red-pantone: #ef233c;
+    --fire-engine-red: #d90429;
+}
+
 /* General Styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 20px;
-    /* Added a background image to make the glass effect visible */
-    background-image: url('https://i.pinimg.com/736x/5f/b9/14/5fb91492c85a32312f4717cc5200b359.jpg');
-    background-size: cover;
-    background-position: center;
+    background-color: var(--space-cadet); /* Use dark blue for background */
+    background-image: none; /* Removed the previous image to use the solid color */
     min-height: 100vh;
 }
 
@@ -17,16 +24,14 @@ body {
 .container {
     max-width: 700px;
     margin: 20px auto;
-    /* Glass effect styles */
-    background: rgba(255, 255, 255, 0.15); /* Semi-transparent background */
-    backdrop-filter: blur(10px); /* The blur effect */
-    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    background: rgba(141, 153, 174, 0.1); /* Glass effect with Cool Gray */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(141, 153, 174, 0.2);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     padding: 30px;
 }
-
 
 /* Header Styling */
 header {
@@ -37,26 +42,31 @@ header {
     justify-content: flex-end;
 }
 .header-btn {
-    /* Made the button smaller */
-    padding: 8px 16px; 
+    padding: 8px 16px;
     font-size: 0.9em;
     border: none;
-    background-color: #007bff;
-    color: white;
+    background-color: var(--cool-gray); /* Use Cool Gray for the secondary button */
+    color: var(--space-cadet);
     border-radius: 5px;
     cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
 }
+.header-btn:hover {
+    background-color: var(--antiflash-white);
+}
+
 
 /* Handwriting Animation */
 .animated-title {
     font-family: 'Cedarville Cursive', cursive;
     font-size: 2.5em;
     text-align: center;
-    color: #fff; /* Changed to white to be visible on the new background */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Added shadow for readability */
+    color: var(--antiflash-white); /* Use white for title text */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     white-space: nowrap;
-    border-right: .15em solid orange;
+    border-right: .15em solid var(--red-pantone); /* Use red for the caret */
     margin: 0 auto 30px auto;
     width: 0;
     animation: typing 3.5s steps(40, end) forwards, blink-caret .75s step-end infinite;
@@ -69,55 +79,47 @@ header {
 
 @keyframes blink-caret {
     from, to { border-color: transparent }
-    50% { border-color: orange; }
+    50% { border-color: var(--red-pantone); }
 }
-
 
 /* Form Styling */
 h1 {
     text-align: center;
     margin-top: 0;
 }
-label {
+label, fieldset legend {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #f0f0f0; /* Lightened for dark background */
+    color: var(--antiflash-white); /* Use white for labels */
 }
 input[type="text"], input[type="date"], input[type="tel"], input[type="email"], select, textarea {
     width: 100%;
     padding: 12px;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--cool-gray);
     border-radius: 5px;
     box-sizing: border-box;
     font-size: 1em;
     text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
+    background: rgba(43, 45, 66, 0.5); /* Semi-transparent dark background for inputs */
+    color: var(--antiflash-white); /* White text in inputs */
 }
-::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: #ddd;
-    opacity: 1; /* Firefox */
+::placeholder {
+    color: var(--cool-gray);
+    opacity: 1;
 }
 input[type="file"] {
     width: 100%;
     margin-bottom: 20px;
-    color: #f0f0f0;
+    color: var(--antiflash-white);
 }
 fieldset {
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--cool-gray);
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 20px;
-    color: #f0f0f0;
-}
-fieldset legend {
-    font-weight: bold;
-    color: #f0f0f0;
-}
-fieldset input[type="radio"] {
-    margin-right: 5px;
+    color: var(--antiflash-white);
 }
 fieldset label {
     display: inline-block;
@@ -127,23 +129,27 @@ fieldset label {
 button[type="submit"] {
     width: 100%;
     padding: 15px;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--fire-engine-red); /* Use Fire Engine Red for submit button */
+    color: var(--antiflash-white);
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 18px;
     font-weight: bold;
+    transition: background-color 0.3s;
 }
 button:hover {
-    opacity: 0.9;
+    opacity: 1; /* Override the old opacity hover */
+}
+button[type="submit"]:hover {
+    background-color: var(--red-pantone); /* Lighter red on hover */
 }
 .hidden {
     display: none;
 }
 .note {
     font-size: 0.9em;
-    color: #ddd;
+    color: var(--cool-gray);
     margin-top: -15px;
     margin-bottom: 15px;
 }
