@@ -50,7 +50,7 @@ function setupPage1() {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         localStorage.setItem('registrationDataP1', JSON.stringify(data));
-        window.location.href = '/api/upload.php';
+        window.location.href = 'upload.html';
     });
 }
 
