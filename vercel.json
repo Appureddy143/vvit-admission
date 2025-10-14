@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/admin.html",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/api/export-excel",
+      "dest": "/api/export-excel.js"
+    },
+    {
+      "src": "/api/export-pdf",
+      "dest": "/api/export-pdf.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "protectionBypassToken": "PROTECTION_BYPASS_TOKEN"
+}
+
