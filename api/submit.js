@@ -12,42 +12,25 @@ export default async function handler(request, response) {
   }
 
   try {
-    console.log("--- API execution started ---");
     const auth = new google.auth.GoogleAuth({
         credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
-            // This line automatically fixes any formatting issues with the private key
             private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
     });
 
-    // --- FIX: Create the Sheets and Drive clients here ---
     const sheets = google.sheets({ version: 'v4', auth });
     const drive = google.drive({ version: 'v3', auth });
-    console.log("Google Auth successful.");
-
+    
     const { fields, files } = await parseForm(request);
-    console.log("Form parsed successfully. Student:", fields.student_name);
-    
     const studentId = await generateStudentIdFromSheet(sheets);
-    console.log("Generated Student ID:", studentId);
-
     const studentFolderId = await createStudentFolder(drive, studentId, fields.student_name);
-    console.log("Created student folder on Drive. ID:", studentFolderId);
-
     const fileLinksAndIds = await uploadFilesToDrive(drive, files, studentFolderId);
-    console.log("Files uploaded to Drive.");
-    
     await saveDataToSheet(sheets, { ...fields, ...fileLinksAndIds, student_id: studentId });
-    console.log("Data saved to Google Sheet.");
-
     const pdfBytes = await generatePdf({ ...fields, student_id: studentId }, drive, fileLinksAndIds.photo_id);
-    console.log("PDF generated successfully.");
-    
     const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
 
-    console.log("--- API execution finished successfully ---");
     return response.status(200).json({
         message: 'Application submitted successfully!',
         studentId: studentId,
@@ -61,7 +44,6 @@ export default async function handler(request, response) {
 }
 
 // --- Helper Functions ---
-// (All helper functions remain the same as the last complete version)
 
 async function parseForm(request) {
     const form = formidable({});
@@ -90,7 +72,9 @@ async function generateStudentIdFromSheet(sheets) {
     return `${prefix}${String(newSerial).padStart(3, '0')}`;
 }
 
+// --- UPDATED FUNCTION ---
 async function createStudentFolder(drive, studentId, studentName) {
+    // Step 1: Create the folder. The service account is the initial owner.
     const folderMetadata = {
         name: `${studentId} - ${studentName}`,
         parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
@@ -100,7 +84,21 @@ async function createStudentFolder(drive, studentId, studentName) {
         resource: folderMetadata,
         fields: 'id',
     });
-    return folder.data.id;
+    const folderId = folder.data.id;
+
+    // Step 2: Create a permission to make the user an owner.
+    await drive.permissions.create({
+        fileId: folderId,
+        requestBody: {
+            role: 'owner',
+            type: 'user',
+            emailAddress: process.env.USER_EMAIL_ADDRESS, // Your personal email
+        },
+        // This is the crucial part that transfers ownership away from the service account
+        transferOwnership: true, 
+    });
+    
+    return folderId;
 }
 
 async function uploadFilesToDrive(drive, files, parentFolderId) {
@@ -150,7 +148,10 @@ async function generatePdf(data, drive, photoFileId) {
 
     if (photoFileId) {
         try {
-            const photoRes = await drive.files.get({ fileId: photoFileId, alt: 'media' }, { responseType: 'arraybuffer' });
+            const photoRes = await drive.files.get({ 
+                fileId: photoFileId, 
+                alt: 'media',
+            }, { responseType: 'arraybuffer' });
             const photoBytes = new Uint8Array(photoRes.data);
             const photoImage = await pdfDoc.embedJpg(photoBytes);
             page.drawImage(photoImage, { x: 50, y: height - 150, width: 100, height: 100 });
