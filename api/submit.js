@@ -21,6 +21,10 @@ export default async function handler(request, response) {
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
     });
+
+    // --- FIX: Create the Sheets and Drive clients here ---
+    const sheets = google.sheets({ version: 'v4', auth });
+    const drive = google.drive({ version: 'v3', auth });
     console.log("Google Auth successful.");
 
     const { fields, files } = await parseForm(request);
