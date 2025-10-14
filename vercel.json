@@ -24,6 +24,6 @@
       "use": "@vercel/node"
     }
   ],
-  "protectionBypassToken": "college123@"
+  "protectionBypassToken": "${process.env.PROTECTION_BYPASS_TOKEN}"
 }
 
