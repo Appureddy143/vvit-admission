@@ -3,6 +3,7 @@ import { formidable } from 'formidable';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import path from 'path';
 
 export const config = { api: { bodyParser: false } };
 
@@ -25,8 +26,8 @@ export default async function handler(request, response) {
     
     const { fields, files } = await parseForm(request);
     const studentId = await generateStudentIdFromSheet(sheets);
-    const studentFolderId = await createStudentFolder(drive, studentId, fields.student_name);
-    const fileLinksAndIds = await uploadFilesToDrive(drive, files, studentFolderId);
+    // We no longer create a sub-folder. We upload directly to the main folder.
+    const fileLinksAndIds = await uploadFilesToDrive(drive, files, studentId);
     await saveDataToSheet(sheets, { ...fields, ...fileLinksAndIds, student_id: studentId });
     const pdfBytes = await generatePdf({ ...fields, student_id: studentId }, drive, fileLinksAndIds.photo_id);
     const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
@@ -72,54 +73,29 @@ async function generateStudentIdFromSheet(sheets) {
     return `${prefix}${String(newSerial).padStart(3, '0')}`;
 }
 
-async function createStudentFolder(drive, studentId, studentName) {
-    // Step 1: Create the folder.
-    const folderMetadata = {
-        name: `${studentId} - ${studentName}`,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-        mimeType: 'application/vnd.google-apps.folder',
-    };
-    const folder = await drive.files.create({
-        resource: folderMetadata,
-        fields: 'id',
-    });
-    const folderId = folder.data.id;
-
-    // Step 2: Transfer ownership to the user.
-    await drive.permissions.create({
-        fileId: folderId,
-        requestBody: {
-            role: 'owner',
-            type: 'user',
-            emailAddress: process.env.USER_EMAIL_ADDRESS,
-        },
-        transferOwnership: true, 
-    });
-    
-    // Step 3: Add a short delay to prevent a race condition.
-    await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second pause
-
-    return folderId;
-}
-
-// --- OPTIMIZED FUNCTION FOR PARALLEL UPLOADS ---
-async function uploadFilesToDrive(drive, files, parentFolderId) {
+// --- NEW UPLOAD FUNCTION ---
+// This function no longer creates a sub-folder.
+// It renames files and uploads them directly to the main folder.
+async function uploadFilesToDrive(drive, files, studentId) {
     const linksAndIds = {};
     const uploadPromises = [];
+    const parentFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // The main "College Admissions" folder
 
     for (const key in files) {
         const file = files[key][0];
         if (file) {
-            const fileMetadata = { name: file.originalFilename, parents: [parentFolderId] };
+            // Create a new filename with the student ID, e.g., "1VJ25001_photo.jpg"
+            const fileExtension = path.extname(file.originalFilename);
+            const newFilename = `${studentId}_${key}${fileExtension}`;
+
+            const fileMetadata = { name: newFilename, parents: [parentFolderId] };
             const media = { mimeType: file.mimetype, body: fs.createReadStream(file.filepath) };
             
-            // Create a promise for each file upload and add it to the array
             const promise = drive.files.create({
                 resource: fileMetadata,
                 media: media,
                 fields: 'id, webViewLink',
             }).then(driveFile => {
-                // When the upload is done, store its info
                 linksAndIds[`${key}_url`] = driveFile.data.webViewLink;
                 linksAndIds[`${key}_id`] = driveFile.data.id;
             });
@@ -127,7 +103,6 @@ async function uploadFilesToDrive(drive, files, parentFolderId) {
         }
     }
 
-    // Wait for all the upload promises to complete
     await Promise.all(uploadPromises);
     
     return linksAndIds;
