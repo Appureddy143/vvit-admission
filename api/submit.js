@@ -18,6 +18,10 @@ export default async function handler(request, response) {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
             private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         },
+        // This tells the service account to act on behalf of your user account
+        clientOptions: {
+          subject: process.env.USER_EMAIL_ADDRESS
+        },
         scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
     });
 
@@ -26,7 +30,6 @@ export default async function handler(request, response) {
     
     const { fields, files } = await parseForm(request);
     const studentId = await generateStudentIdFromSheet(sheets);
-    // We no longer create a sub-folder. We upload directly to the main folder.
     const fileLinksAndIds = await uploadFilesToDrive(drive, files, studentId);
     await saveDataToSheet(sheets, { ...fields, ...fileLinksAndIds, student_id: studentId });
     const pdfBytes = await generatePdf({ ...fields, student_id: studentId }, drive, fileLinksAndIds.photo_id);
@@ -73,18 +76,14 @@ async function generateStudentIdFromSheet(sheets) {
     return `${prefix}${String(newSerial).padStart(3, '0')}`;
 }
 
-// --- NEW UPLOAD FUNCTION ---
-// This function no longer creates a sub-folder.
-// It renames files and uploads them directly to the main folder.
 async function uploadFilesToDrive(drive, files, studentId) {
     const linksAndIds = {};
     const uploadPromises = [];
-    const parentFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // The main "College Admissions" folder
+    const parentFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
     for (const key in files) {
         const file = files[key][0];
         if (file) {
-            // Create a new filename with the student ID, e.g., "1VJ25001_photo.jpg"
             const fileExtension = path.extname(file.originalFilename);
             const newFilename = `${studentId}_${key}${fileExtension}`;
 
