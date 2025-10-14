@@ -13,6 +13,7 @@ export default async function handler(request, response) {
   }
 
   try {
+    // This is the final, correct authentication block for a Workspace account
     const auth = new google.auth.GoogleAuth({
         credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
