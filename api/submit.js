@@ -74,7 +74,7 @@ async function generateStudentIdFromSheet(sheets) {
 
 // --- UPDATED FUNCTION ---
 async function createStudentFolder(drive, studentId, studentName) {
-    // Step 1: Create the folder. The service account is the initial owner.
+    // Step 1: Create the folder.
     const folderMetadata = {
         name: `${studentId} - ${studentName}`,
         parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
@@ -86,18 +86,20 @@ async function createStudentFolder(drive, studentId, studentName) {
     });
     const folderId = folder.data.id;
 
-    // Step 2: Create a permission to make the user an owner.
+    // Step 2: Transfer ownership to the user.
     await drive.permissions.create({
         fileId: folderId,
         requestBody: {
             role: 'owner',
             type: 'user',
-            emailAddress: process.env.USER_EMAIL_ADDRESS, // Your personal email
+            emailAddress: process.env.USER_EMAIL_ADDRESS,
         },
-        // This is the crucial part that transfers ownership away from the service account
         transferOwnership: true, 
     });
     
+    // Step 3: Add a short delay to prevent a race condition.
+    await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second pause
+
     return folderId;
 }
 
