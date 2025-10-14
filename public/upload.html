@@ -1,81 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vijay Vittal - Document Upload</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Upload | VVIT Admission</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    form {
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 480px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #555;
+    }
+
+    input[type="file"],
+    input[type="text"] {
+      width: 100%;
+      margin-top: 5px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Popup */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .popup.show { display: flex; }
+
+    .popup-content {
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      width: 320px;
+      position: relative;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #333;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ddd;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    #downloadBtn {
+      display: none;
+      background: #28a745;
+      margin-top: 15px;
+    }
+
+    #downloadBtn:hover {
+      background: #218838;
+    }
+
+    #shareWhatsapp {
+      margin-top: 15px;
+      background-color: #25D366;
+    }
+
+    #shareWhatsapp:hover {
+      background-color: #1DA851;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Document Upload</h2>
-        <form id="page2Form">
 
-            <!-- Custom File Input for Photo -->
-            <div class="file-input-wrapper">
-                <label>Passport Size Photo (JPG/JPEG)</label>
-                <div class="file-input-container">
-                    <input type="file" id="photo" name="photo" accept=".jpg, .jpeg" required>
-                    <label for="photo" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+  <h2>Upload Your Documents</h2>
 
-            <!-- Custom File Input for Marks Card -->
-            <div class="file-input-wrapper">
-                <label>Previous Year Marks Cards (PDF)</label>
-                <p class="note">Diploma students must upload all semester marks cards in a single PDF.</p>
-                <div class="file-input-container">
-                    <input type="file" id="marks_card" name="marks_card" accept=".pdf" required>
-                    <label for="marks_card" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
-            
-            <!-- Custom File Input for Aadhaar Front -->
-            <div class="file-input-wrapper">
-                <label>Aadhaar Card - Front Side</label>
-                <div class="file-input-container">
-                    <input type="file" id="aadhaar_front" name="aadhaar_front" required>
-                    <label for="aadhaar_front" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <label>Enter Your Unique ID:</label>
+    <input type="text" id="uniqueId" name="uniqueId" placeholder="Enter your admission ID" required>
 
-            <!-- Custom File Input for Aadhaar Back -->
-            <div class="file-input-wrapper">
-                <label>Aadhaar Card - Back Side</label>
-                <div class="file-input-container">
-                    <input type="file" id="aadhaar_back" name="aadhaar_back" required>
-                    <label for="aadhaar_back" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
-            
-            <!-- Custom File Input for Caste/Income (Conditional) -->
-            <div id="casteIncomeSection" class="file-input-wrapper hidden">
-                <label>Caste and Income Certificate (PDF)</label>
-                <div class="file-input-container">
-                    <input type="file" id="caste_income" name="caste_income" accept=".pdf">
-                    <label for="caste_income" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+    <label>Upload Photo:</label>
+    <input type="file" name="photo" accept="image/*" required>
 
-            <button type="submit">Submit Application</button>
-            <p id="submit-status"></p>
-        </form>
+    <label>Upload Marks Card (PDF):</label>
+    <input type="file" name="marks" accept="application/pdf" required>
+
+    <label>Upload Signature (Image):</label>
+    <input type="file" name="signature" accept="image/*" required>
+
+    <button type="submit">Submit Documents</button>
+    <button type="button" id="shareWhatsapp">Share ID on WhatsApp</button>
+  </form>
+
+  <!-- Popup -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <span id="closePopup" class="close">&times;</span>
+      <div id="popupMessage"></div>
+      <button id="downloadBtn">Download PDF</button>
     </div>
-    <script src="script.js"></script>
-    <!-- Submission Modal -->
-<div id="submissionModal" class="modal hidden">
-    <div class="modal-content">
-        <div id="modalLoading" class="loader"></div>
-        <p id="modalMessage">Uploading documents... This may take several minutes.</p>
-        <a id="downloadPDF" href="#" class="hidden" download>Download PDF</a>
-        <button id="closeModal" class="hidden">Close</button>
-    </div>
-</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('uploadForm');
+      const popup = document.getElementById('popup');
+      const popupMessage = document.getElementById('popupMessage');
+      const closePopup = document.getElementById('closePopup');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const shareBtn = document.getElementById('shareWhatsapp');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        popup.classList.add('show');
+        popupMessage.innerHTML = `
+          <div class="loading-spinner"></div>
+          <p>Please wait, uploading documents...<br>This may take several minutes.</p>
+        `;
+        downloadBtn.style.display = 'none';
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch('upload.php', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.text();
+
+          if (result.includes('success')) {
+            popupMessage.innerHTML = `
+              <p>✅ Documents uploaded successfully!</p>
+              <p>You can now download your PDF receipt below.</p>
+            `;
+            downloadBtn.style.display = 'inline-block';
+          } else {
+            popupMessage.innerHTML = `<p>❌ Upload failed. Please try again.</p>`;
+          }
+        } catch (error) {
+          popupMessage.innerHTML = `<p>⚠️ Error: ${error.message}</p>`;
+        }
+      });
+
+      closePopup.addEventListener('click', () => {
+        popup.classList.remove('show');
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        window.location.href = 'generate_pdf.php';
+      });
+
+      shareBtn.addEventListener('click', () => {
+        const uniqueId = document.getElementById('uniqueId').value.trim();
+        if (uniqueId === '') {
+          alert('Please enter your ID first!');
+          return;
+        }
+        const shareLink = `https://wa.me/?text=My Admission ID is ${uniqueId}`;
+        window.open(shareLink, '_blank');
+      });
+    });
+  </script>
+
 </body>
-   </html>
-
+</html>
