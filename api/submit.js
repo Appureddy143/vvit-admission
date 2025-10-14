@@ -13,15 +13,12 @@ export default async function handler(request, response) {
   }
 
   try {
-    // This is the final, correct authentication block for a Workspace account
+    // This is the final, correct, and simplest authentication block.
+    // It does NOT use impersonation.
     const auth = new google.auth.GoogleAuth({
         credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
             private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        },
-        // This tells the service account to act on behalf of your user account
-        clientOptions: {
-          subject: process.env.USER_EMAIL_ADDRESS
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
     });
