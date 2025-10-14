@@ -61,24 +61,31 @@ function setupPage2() {
     const casteIncomeInput = document.getElementById('caste_income');
     const submitButton = form.querySelector('button[type="submit"]');
 
-    // Modal setup
+    // Modal setup (hidden initially)
     const modal = document.createElement('div');
     modal.id = 'modalPopup';
     modal.style = `
-        position: fixed; top:0; left:0; width:100%; height:100%; 
-        background: rgba(0,0,0,0.5); display:flex; justify-content:center; 
-        align-items:center; z-index:1000;`;
+        position: fixed; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.6); display:none; justify-content:center;
+        align-items:center; z-index:1000; backdrop-filter: blur(5px);
+    `;
     modal.innerHTML = `
-        <div style="background:#fff; padding:30px; border-radius:10px; text-align:center; width:90%; max-width:400px;">
-            <p id="modalMessage">Please wait, uploading documents. This may take several minutes...</p>
+        <div style="background:#fff; padding:25px; border-radius:12px; text-align:center; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+            <div id="loadingCircle" style="width:40px; height:40px; border:4px solid #ccc; border-top-color:#d90429; border-radius:50%; margin:0 auto 15px auto; animation:spin 1s linear infinite;"></div>
+            <p id="modalMessage" style="color:#333;">Please wait, uploading documents. This may take several minutes...</p>
             <a id="downloadPDF" href="#" download class="hidden" style="display:block; margin:15px 0; background:#d90429; color:#fff; padding:10px; border-radius:5px; text-decoration:none;">Download PDF</a>
             <button id="closeModal" class="hidden" style="background:#2b2d42; color:#fff; padding:10px 15px; border:none; border-radius:5px; cursor:pointer;">Close</button>
         </div>
+        <style>
+            @keyframes spin {from {transform:rotate(0)} to {transform:rotate(360deg)}}
+        </style>
     `;
     document.body.appendChild(modal);
+
     const modalMessage = modal.querySelector('#modalMessage');
     const downloadPDF = modal.querySelector('#downloadPDF');
     const closeModal = modal.querySelector('#closeModal');
+    const loadingCircle = modal.querySelector('#loadingCircle');
 
     // Custom file input file name display
     form.querySelectorAll('input[type="file"]').forEach(input => {
@@ -103,9 +110,15 @@ function setupPage2() {
     // Submit form
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        submitButton.disabled = true;
+
+        // Show modal
         modal.style.display = 'flex';
         modalMessage.textContent = 'Please wait, uploading documents. This may take several minutes...';
+        downloadPDF.classList.add('hidden');
+        closeModal.classList.add('hidden');
+        loadingCircle.style.display = 'block';
+
+        submitButton.disabled = true;
 
         const finalFormData = new FormData();
         Object.keys(page1Data).forEach(key => finalFormData.append(key, page1Data[key]));
@@ -116,16 +129,20 @@ function setupPage2() {
         try {
             const response = await fetch('/api/submit', { method: 'POST', body: finalFormData });
             const result = await response.json();
+
             if (!response.ok) throw new Error(result.error || 'Submission failed.');
+
             localStorage.removeItem('registrationDataP1');
 
-            modalMessage.textContent = `Submission successful! Your Admission ID is: ${result.studentId}`;
+            // Update modal
+            loadingCircle.style.display = 'none';
+            modalMessage.textContent = `✅ Submission successful! Your Admission ID is: ${result.studentId}`;
 
             downloadPDF.href = result.pdfUrl;
             downloadPDF.classList.remove('hidden');
 
             downloadPDF.addEventListener('click', () => {
-                const whatsappMessage = `Thank you for registering. Your Admission ID is ${result.studentId}.`;
+                const whatsappMessage = `Thank you for registering! Your Admission ID is ${result.studentId}.`;
                 const studentPhone = page1Data.mobile_number.replace(/\D/g, '');
                 window.open(`https://wa.me/91${studentPhone}?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
             });
@@ -134,7 +151,8 @@ function setupPage2() {
             closeModal.addEventListener('click', () => modal.style.display = 'none');
 
         } catch (error) {
-            modalMessage.textContent = `Error: ${error.message}`;
+            loadingCircle.style.display = 'none';
+            modalMessage.textContent = `❌ Error: ${error.message}`;
             closeModal.classList.remove('hidden');
             closeModal.addEventListener('click', () => modal.style.display = 'none');
         } finally {
