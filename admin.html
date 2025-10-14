@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VVIT Admin Panel</title>
+    <link rel="stylesheet" href="style.css"> <!-- Re-using the main stylesheet for consistency -->
+    <style>
+        /* Additional styles for the admin page */
+        .admin-container {
+            text-align: center;
+        }
+        .download-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--antiflash-white);
+            background-color: var(--fire-engine-red);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background-color: var(--red-pantone);
+        }
+    </style>
+</head>
+<body>
+    <div class="container admin-container">
+        <h2>Admin Dashboard</h2>
+        <p>Export all student admission data to an Excel file.</p>
+        <a href="/api/export-excel" class="download-btn" download>
+            Download Admission Data (Excel)
+        </a>
+    </div>
+</body>
+</html>
