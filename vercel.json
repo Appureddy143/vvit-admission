@@ -23,7 +23,6 @@
       "src": "package.json",
       "use": "@vercel/node"
     }
-  ],
-  "protectionBypassToken": "${process.env.PROTECTION_BYPASS_TOKEN}"
+  ]
 }
 
