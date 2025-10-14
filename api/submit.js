@@ -72,7 +72,6 @@ async function generateStudentIdFromSheet(sheets) {
     return `${prefix}${String(newSerial).padStart(3, '0')}`;
 }
 
-// --- UPDATED FUNCTION ---
 async function createStudentFolder(drive, studentId, studentName) {
     // Step 1: Create the folder.
     const folderMetadata = {
@@ -103,20 +102,34 @@ async function createStudentFolder(drive, studentId, studentName) {
     return folderId;
 }
 
+// --- OPTIMIZED FUNCTION FOR PARALLEL UPLOADS ---
 async function uploadFilesToDrive(drive, files, parentFolderId) {
     const linksAndIds = {};
+    const uploadPromises = [];
+
     for (const key in files) {
         const file = files[key][0];
         if (file) {
             const fileMetadata = { name: file.originalFilename, parents: [parentFolderId] };
             const media = { mimeType: file.mimetype, body: fs.createReadStream(file.filepath) };
-            const driveFile = await drive.files.create({
-                resource: fileMetadata, media: media, fields: 'id, webViewLink',
+            
+            // Create a promise for each file upload and add it to the array
+            const promise = drive.files.create({
+                resource: fileMetadata,
+                media: media,
+                fields: 'id, webViewLink',
+            }).then(driveFile => {
+                // When the upload is done, store its info
+                linksAndIds[`${key}_url`] = driveFile.data.webViewLink;
+                linksAndIds[`${key}_id`] = driveFile.data.id;
             });
-            linksAndIds[`${key}_url`] = driveFile.data.webViewLink;
-            linksAndIds[`${key}_id`] = driveFile.data.id;
+            uploadPromises.push(promise);
         }
     }
+
+    // Wait for all the upload promises to complete
+    await Promise.all(uploadPromises);
+    
     return linksAndIds;
 }
 
