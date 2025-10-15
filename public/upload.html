@@ -1,88 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vijay Vittal - Document Upload</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vijay Vittal - Document Upload</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Center container */
+    body {
+      background-color: #f4f6f9;
+      font-family: "Poppins", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      width: 450px;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .file-input-wrapper {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .file-input-label {
+      display: inline-block;
+      background: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .file-name {
+      margin-left: 10px;
+      color: #555;
+    }
+    button {
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hidden { display: none; }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      width: 350px;
+    }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 50px; height: 50px;
+      margin: 0 auto 15px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .modal-button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .modal-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Document Upload</h2>
-        <form id="page2Form">
 
-            <!-- Custom File Input for Photo -->
-            <div class="file-input-wrapper">
-                <label>Passport Size Photo (JPG/JPEG)</label>
-                <div class="file-input-container">
-                    <input type="file" id="photo" name="photo" accept=".jpg, .jpeg" required>
-                    <label for="photo" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+  <div class="container">
+    <h2>Document Upload</h2>
+    <form id="page2Form" enctype="multipart/form-data">
 
-            <!-- Custom File Input for Marks Card -->
-            <div class="file-input-wrapper">
-                <label>Previous Year Marks Cards (PDF)</label>
-                <p class="note">Diploma students must upload all semester marks cards in a single PDF.</p>
-                <div class="file-input-container">
-                    <input type="file" id="marks_card" name="marks_card" accept=".pdf" required>
-                    <label for="marks_card" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
-            
-            <!-- Custom File Input for Aadhaar Front -->
-            <div class="file-input-wrapper">
-                <label>Aadhaar Card - Front Side</label>
-                <div class="file-input-container">
-                    <input type="file" id="aadhaar_front" name="aadhaar_front" required>
-                    <label for="aadhaar_front" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+      <!-- Photo -->
+      <div class="file-input-wrapper">
+        <label>Passport Size Photo (JPG/JPEG)</label>
+        <input type="file" id="photo" name="photo" accept=".jpg,.jpeg" required>
+      </div>
 
-            <!-- Custom File Input for Aadhaar Back -->
-            <div class="file-input-wrapper">
-                <label>Aadhaar Card - Back Side</label>
-                <div class="file-input-container">
-                    <input type="file" id="aadhaar_back" name="aadhaar_back" required>
-                    <label for="aadhaar_back" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
-            
-            <!-- Custom File Input for Caste/Income (Conditional) -->
-            <div id="casteIncomeSection" class="file-input-wrapper hidden">
-                <label>Caste and Income Certificate (PDF)</label>
-                <div class="file-input-container">
-                    <input type="file" id="caste_income" name="caste_income" accept=".pdf">
-                    <label for="caste_income" class="file-input-label">Choose File</label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-            </div>
+      <!-- Marks Card -->
+      <div class="file-input-wrapper">
+        <label>Previous Year Marks Cards (PDF)</label>
+        <input type="file" id="marks_card" name="marks_card" accept=".pdf" required>
+      </div>
 
-            <button type="submit">Submit Application</button>
-        </form>
+      <!-- Aadhaar Front -->
+      <div class="file-input-wrapper">
+        <label>Aadhaar Card - Front Side</label>
+        <input type="file" id="aadhaar_front" name="aadhaar_front" required>
+      </div>
+
+      <!-- Aadhaar Back -->
+      <div class="file-input-wrapper">
+        <label>Aadhaar Card - Back Side</label>
+        <input type="file" id="aadhaar_back" name="aadhaar_back" required>
+      </div>
+
+      <!-- Caste/Income -->
+      <div class="file-input-wrapper">
+        <label>Caste & Income Certificate (PDF) [Optional]</label>
+        <input type="file" id="caste_income" name="caste_income" accept=".pdf">
+      </div>
+
+      <button type="submit">Submit Application</button>
+    </form>
+  </div>
+
+  <!-- Modal -->
+  <div id="loadingModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div id="loader" class="loader"></div>
+      <p id="modal-text">Uploading documents...<br>Please wait, this may take a few moments.</p>
+
+      <!-- Success -->
+      <div id="success-content" class="hidden">
+        <p>✅ Upload successful!</p>
+        <p>Your ID: <span id="generatedId"></span></p>
+        <a href="#" id="pdfDownloadLink" class="modal-button" download="application.pdf">Download Application PDF</a>
+      </div>
+
+      <!-- Error -->
+      <button id="closeModalBtn" class="modal-button hidden">Close</button>
     </div>
+  </div>
 
-    <!-- Loading Modal -->
-    <div id="loadingModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div id="loader" class="loader"></div>
-            <p id="modal-text">Uploading documents...<br>This may take a few moments.</p>
-            
-            <!-- This section is shown on success -->
-            <div id="success-content" class="hidden">
-                 <a href="#" id="pdfDownloadLink" class="modal-button" download="application.pdf">Download Application PDF</a>
-                 <a href="#" id="whatsappLink" class="modal-button" target="_blank">Share ID on WhatsApp</a>
-            </div>
+  <script>
+    const form = document.getElementById("page2Form");
+    const modal = document.getElementById("loadingModal");
+    const loader = document.getElementById("loader");
+    const modalText = document.getElementById("modal-text");
+    const successContent = document.getElementById("success-content");
+    const closeModalBtn = document.getElementById("closeModalBtn");
 
-             <!-- This button is shown on error -->
-             <button id="closeModalBtn" class="modal-button hidden">Close</button>
-        </div>
-    </div>
-    <script src="script.js"></script>
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      modal.classList.remove("hidden");
+      loader.classList.remove("hidden");
+      successContent.classList.add("hidden");
+      modalText.textContent = "Uploading documents... Please wait.";
+
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (res.ok) {
+          loader.classList.add("hidden");
+          modalText.textContent = "";
+          successContent.classList.remove("hidden");
+          document.getElementById("generatedId").textContent = data.id;
+
+          // Auto send ID via WhatsApp
+          const whatsappMsg = `Your Vijay Vittal College Admission ID is: ${data.id}`;
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`;
+          window.open(whatsappUrl, "_blank");
+
+          // Show download link after upload
+          document.getElementById("pdfDownloadLink").href = `/uploads/${data.pdfFile || "application.pdf"}`;
+        } else {
+          throw new Error(data.error || "Something went wrong");
+        }
+      } catch (err) {
+        loader.classList.add("hidden");
+        modalText.textContent = "❌ Something went wrong. Please try again.";
+        closeModalBtn.classList.remove("hidden");
+      }
+    });
+
+    closeModalBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+  </script>
 </body>
 </html>
-
