@@ -7,6 +7,30 @@
 
   <!-- ✅ Use absolute path from root -->
   <link rel="stylesheet" href="/public/style.css" />
+  <style>
+
+/* Header Button */
+button.header-btn,
+a.header-btn {
+    all: unset; /* reset default button/a styles */
+    display: inline-block;
+    padding: 12px 25px;
+    font-size: 1em;
+    background-color: var(--cool-gray);
+    color: var(--space-cadet);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none; /* for <a> */
+    transition: all 0.3s ease;
+}
+button.header-btn:hover,
+a.header-btn:hover {
+    background-color: var(--antiflash-white);
+    color: var(--space-cadet);
+}
+</style>
 </head>
 <body>
     <header>
@@ -127,9 +151,9 @@
                     <option value="ME">ME</option>
                 </select>
             </div>
-<button type="button" class="header-btn" onclick="window.location.href='/public/upload.html'">
-  Proceed to Uploads
-</button>
+    <a href="/public/upload.html" class="header-btn">
+        Proceed to Uploads
+    </a>
         </form>
     </div>
 
