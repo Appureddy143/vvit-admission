@@ -1,12 +1,12 @@
 {
-  "name": "vercel-admissions-project",
+  "name": "vvit-admission",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "googleapis": "^140.0.1",
-    "google-auth-library": "^9.11.0",
-    "formidable": "^3.5.1",
-    "node-fetch": "^3.3.2",
-    "pdf-lib": "^1.17.1"
-  },
-  "type": "module"
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "formidable": "^3.5.2",
+    "pdfkit": "^0.14.0",
+    "whatsapp-web.js": "^1.25.0"
+  }
 }
