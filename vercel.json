@@ -1,28 +1,12 @@
 {
   "version": 2,
-  "routes": [
-    {
-      "src": "/admin.html",
-      "dest": "/public/admin.html"
-    },
-    {
-      "src": "/api/export-excel",
-      "dest": "/api/export-excel.js"
-    },
-    {
-      "src": "/api/export-pdf",
-      "dest": "/api/export-pdf.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
-  ],
   "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node"
-    }
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "public/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
 
