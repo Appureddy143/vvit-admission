@@ -32,9 +32,12 @@ WORKDIR /var/www/html
 COPY composer.json .
 RUN composer install
 
-# Copy the rest of the application source code
+# Copy the application source code
 COPY src/ .
 
-# Ensure the uploads directory is writable by the web server
-RUN mkdir -p uploads && chown www-data:www-data uploads
+# --- FIX: Explicitly copy the .htaccess file ---
+COPY src/.htaccess .
+
+# Ensure the uploads directory and all files are writable by the web server
+RUN mkdir -p uploads && chown -R www-data:www-data /var/www/html
 
