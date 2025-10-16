@@ -1,9 +1,19 @@
 <?php
-$host = getenv('DB_HOST');
-$port = getenv('DB_PORT');
-$dbname = getenv('DB_NAME');
-$user = getenv('DB_USER');
-$password = getenv('DB_PASSWORD');
+// Get the database connection URL from Render's environment variables
+$database_url = getenv('DATABASE_URL');
+
+if ($database_url === false) {
+    die("Database connection failed: DATABASE_URL environment variable not set.");
+}
+
+// Parse the connection URL
+$db_parts = parse_url($database_url);
+
+$host = $db_parts['host'];
+$port = $db_parts['port'];
+$dbname = ltrim($db_parts['path'], '/');
+$user = $db_parts['user'];
+$password = $db_parts['pass'];
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
 
@@ -45,3 +55,4 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 ?>
+
