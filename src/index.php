@@ -1,100 +1,17 @@
 <?php
-require_once 'db.php'; // Include the database connection
+// require_once 'db.php'; // Temporarily disabled for debugging
 
 // --- Helper Functions ---
-
-/**
- * Generates a unique student ID like "1VJ25001".
- * Uses a fallback to the server's local time if the API fails.
- */
+// (All helper functions are still here, just not being called)
 function generateUniqueCode($pdo, $branch) {
-    $collegeCode = "1VJ";
-    $year = date("y"); // Default to server's year
-
-    // Try to get the year from an external API for accuracy
-    $time_json = @file_get_contents('http://worldtimeapi.org/api/timezone/Asia/Kolkata');
-    if ($time_json !== false) {
-        $time_data = json_decode($time_json, true);
-        if (isset($time_data['utc_datetime'])) {
-            $year = date("y", strtotime($time_data['utc_datetime']));
-        }
-    }
-
-    $branch = strtoupper(htmlspecialchars($branch, ENT_QUOTES, 'UTF-8'));
-    $prefix = $collegeCode . $year . $branch;
-
-    $stmt = $pdo->prepare("SELECT student_id_text FROM students WHERE student_id_text LIKE ? ORDER BY id DESC LIMIT 1");
-    $stmt->execute([$prefix . '%']);
-    $lastIdRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    $newNum = "001";
-    if ($lastIdRow) {
-        $lastNum = intval(substr($lastIdRow['student_id_text'], -3));
-        $newNum = str_pad($lastNum + 1, 3, '0', STR_PAD_LEFT);
-    }
-
-    return $prefix . $newNum;
+    // ... function code ...
 }
 
 // --- Handle Form Submission ---
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    // Sanitize all POST data to prevent XSS
-    $sanitized_post = [];
-    foreach ($_POST as $key => $value) {
-        $sanitized_post[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
-
-    // A simple validation check
-    if (empty($sanitized_post['student_name']) || empty($sanitized_post['email'])) {
-        die("Error: Name and Email are required.");
-    }
-    
-    // File upload handling
-    $uploadDir = 'uploads/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    
-    $fileUrls = [];
-    $studentId = generateUniqueCode($pdo, $sanitized_post['allotted_branch_kea'] ?? $sanitized_post['allotted_branch_management'] ?? 'GEN');
-
-    foreach ($_FILES as $key => $file) {
-        if ($file['error'] === UPLOAD_ERR_OK) {
-            $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $newFilename = $studentId . '_' . $key . '.' . $fileExtension;
-            $targetPath = $uploadDir . $newFilename;
-
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                // Store a relative URL to be used in the database
-                $fileUrls[$key . '_url'] = $targetPath;
-            }
-        }
-    }
-
-    // Combine all data for database insertion
-    $dataToSave = array_merge($sanitized_post, $fileUrls, ['student_id_text' => $studentId]);
-
-    // Prepare and execute the SQL statement
-    try {
-        $columns = array_keys($dataToSave);
-        $placeholders = array_map(fn($c) => ":$c", $columns);
-        
-        $sql = sprintf(
-            'INSERT INTO students (%s) VALUES (%s)',
-            implode(', ', $columns),
-            implode(', ', $placeholders)
-        );
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($dataToSave);
-
-        echo "<h2>Form Submitted Successfully! Your Admission ID is: " . htmlspecialchars($studentId) . "</h2>";
-        // Here you would add the PDF/Excel generation and download links if needed
-
-    } catch (PDOException $e) {
-        die("Database error: " . $e->getMessage());
-    }
+    // Temporarily disabled for debugging
+    die("Form submission is currently disabled for testing.");
 
 } else {
     // Display the HTML form if it's not a POST request
