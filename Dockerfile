@@ -1,8 +1,10 @@
 # Use the official PHP image with Apache web server
 FROM php:8.2-apache
 
+# Enable Apache's rewrite module
+RUN a2enmod rewrite
+
 # Install system dependencies required for PHP extensions
-# Added php-curl to this list
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
@@ -27,9 +29,8 @@ WORKDIR /var/www/html
 COPY composer.json .
 RUN composer install
 
-# Copy the rest of the application source code
+# Copy the rest of the application source code (including the new .htaccess file)
 COPY src/ .
 
 # Ensure the uploads directory is writable by the web server
 RUN mkdir -p uploads && chown www-data:www-data uploads
-
