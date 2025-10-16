@@ -2,18 +2,20 @@
 FROM php:8.2-apache
 
 # Install system dependencies required for PHP extensions
+# Added php-curl to this list
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure and install the gd and zip extensions
+# Configure and install the gd, zip, and curl extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    && docker-php-ext-install pdo pdo_pgsql zip curl
 
 # Install Composer for PHP dependency management
 COPY --from=composer /usr/bin/composer /usr/bin/composer
