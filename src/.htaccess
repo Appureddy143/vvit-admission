@@ -1,0 +1,11 @@
+# Enable the rewrite engine to handle URL routing
+RewriteEngine On
+
+# Ensure that requests for existing files (like index.php or admin.php) are served directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# If a requested path doesn't exist, try appending .php to it
+# This allows you to visit /admin instead of /admin.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^ %{REQUEST_URI}.php [L]
