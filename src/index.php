@@ -1,20 +1,113 @@
 <?php
-// require_once 'db.php'; // Temporarily disabled for debugging
+require_once 'db.php'; // Re-enabled the database connection
 
 // --- Helper Functions ---
-// (All helper functions are still here, just not being called)
-function generateUniqueCode($pdo, $branch) {
-    // ... function code ...
+function generateUniqueCode($pdo) {
+    $collegeCode = "1VJ";
+    $year = date("y");
+
+    // Try to get accurate year from an external API, with a fallback
+    $time_json = @file_get_contents('http://worldtimeapi.org/api/timezone/Asia/Kolkata');
+    if ($time_json !== false) {
+        $time_data = json_decode($time_json, true);
+        if (isset($time_data['utc_datetime'])) {
+            $year = date("y", strtotime($time_data['utc_datetime']));
+        }
+    }
+    
+    // Determine branch from POST data, default if not set
+    $branch = $_POST['allotted_branch_kea'] ?? $_POST['allotted_branch_management'] ?? 'GEN';
+    $branch = strtoupper(htmlspecialchars($branch, ENT_QUOTES, 'UTF-8'));
+    $prefix = $collegeCode . $year . $branch;
+
+    $stmt = $pdo->prepare("SELECT student_id_text FROM students WHERE student_id_text LIKE ? ORDER BY id DESC LIMIT 1");
+    $stmt->execute([$prefix . '%']);
+    $lastIdRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $newNum = "001";
+    if ($lastIdRow) {
+        $lastNum = intval(substr($lastIdRow['student_id_text'], -3));
+        $newNum = str_pad($lastNum + 1, 3, '0', STR_PAD_LEFT);
+    }
+
+    return $prefix . $newNum;
 }
 
 // --- Handle Form Submission ---
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    // Temporarily disabled for debugging
-    die("Form submission is currently disabled for testing.");
+    // Sanitize all POST data to prevent XSS attacks
+    $sanitized_post = [];
+    foreach ($_POST as $key => $value) {
+        // Use htmlspecialchars for robust sanitization
+        $sanitized_post[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    // Basic validation
+    if (empty($sanitized_post['student_name']) || empty($sanitized_post['email'])) {
+        die("Error: Student Name and Email are required fields.");
+    }
+    
+    $studentId = generateUniqueCode($pdo);
+    
+    // Handle file uploads
+    $uploadDir = 'uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    $fileUrls = [];
+    foreach ($_FILES as $key => $file) {
+        if (isset($file['error']) && $file['error'] === UPLOAD_ERR_OK) {
+            $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $newFilename = $studentId . '_' . $key . '.' . $fileExtension;
+            $targetPath = $uploadDir . $newFilename;
+
+            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                $fileUrls[$key . '_url'] = $targetPath;
+            }
+        }
+    }
+
+    // Combine sanitized text data and file URLs for database insertion
+    $dataToSave = array_merge($sanitized_post, $fileUrls, ['student_id_text' => $studentId]);
+
+    try {
+        // Dynamically build the SQL query to handle all form fields
+        $columns = array_keys($dataToSave);
+        // Filter out any potential empty keys or invalid column names
+        $filtered_columns = array_filter($columns, function($col) use ($pdo) {
+             // A simple check to ensure columns are valid before using them.
+             // This is a basic security measure.
+             return preg_match('/^[a-zA-Z0-9_]+$/', $col);
+        });
+
+        $placeholders = array_map(fn($c) => ":$c", $filtered_columns);
+        
+        $sql = sprintf(
+            'INSERT INTO students (%s) VALUES (%s)',
+            implode(', ', $filtered_columns),
+            implode(', ', $placeholders)
+        );
+
+        $stmt = $pdo->prepare($sql);
+
+        // Bind values from the dataToSave array to the named placeholders
+        foreach ($filtered_columns as $column) {
+            $stmt->bindValue(":$column", $dataToSave[$column]);
+        }
+        
+        $stmt->execute();
+
+        echo "<h2>Form Submitted Successfully! Your Admission ID is: " . htmlspecialchars($studentId) . "</h2>";
+        // You can add links to generate PDF/Excel here later if needed
+
+    } catch (PDOException $e) {
+        die("Database error: " . $e->getMessage());
+    }
 
 } else {
-    // Display the HTML form if it's not a POST request
+    // If it's not a POST request, display the HTML form
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +166,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         button[type="submit"]:hover { background-color: var(--red-pantone); }
         .note { font-size: 0.9em; color: var(--cool-gray); margin-top: -15px; margin-bottom: 15px; }
         .hidden { display: none; }
-        /* Custom File Input Styles would go here if needed */
     </style>
 </head>
 <body>
@@ -84,21 +176,112 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h1 class="animated-title">Vijay Vittal Institute of Technology</h1>
         <h2>Student Registration</h2>
         <form action="index.php" method="POST" enctype="multipart/form-data">
-            <!-- All your HTML form fields from the previous version go here -->
+            
             <label for="student_name">Student Name</label>
             <input type="text" id="student_name" name="student_name" required>
 
             <label for="dob">Date of Birth</label>
             <input type="date" id="dob" name="dob" required>
             
-            <!-- ... (and so on for all other fields) ... -->
+            <label for="father_name">Father's Name</label>
+            <input type="text" id="father_name" name="father_name" required>
+
+            <label for="mother_name">Mother's Name</label>
+            <input type="text" id="mother_name" name="mother_name" required>
+
+            <label for="mobile_number">Mobile Number</label>
+            <input type="tel" id="mobile_number" name="mobile_number" required>
+
+            <label for="parent_mobile_number">Father/Mother/Guardian Mobile Number</label>
+            <input type="tel" id="parent_mobile_number" name="parent_mobile_number" required>
+
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="permanent_address">Permanent Address</label>
+            <textarea id="permanent_address" name="permanent_address" rows="3" required></textarea>
+
+            <label for="previous_college">Previous Year College Name</label>
+            <input type="text" id="previous_college" name="previous_college" required>
+
+            <label for="previous_combination">Previous Year Combination</label>
+            <select id="previous_combination" name="previous_combination" required>
+                <option value="">--Select--</option>
+                <option value="PCMB">PCMB</option>
+                <option value="PCMC">PCMC</option>
+                <option value="DIPLOMA">DIPLOMA (Lateral Entry)</option>
+            </select>
+
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="">--Select--</option>
+                <option value="CAT 1">CAT 1</option>
+                <option value="2A">2A</option>
+                <option value="2B">2B</option>
+                <option value="3A">3A</option>
+                <option value="3B">3B</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="NOT APPLICABLE">NOT APPLICABLE</option>
+            </select>
+
+            <label for="sub_caste">Sub Caste (e.g., Lingayat, Reddy)</label>
+            <input type="text" id="sub_caste" name="sub_caste" required>
+
+            <fieldset>
+                <legend>Admission Through</legend>
+                <input type="radio" id="kea" name="admission_through" value="KEA" required>
+                <label for="kea">KEA</label>
+                <input type="radio" id="management" name="admission_through" value="MANAGEMENT">
+                <label for="management">MANAGEMENT</label>
+            </fieldset>
+
+            <div id="keaFields" class="hidden">
+                <label for="cet_number">CET Number</label>
+                <input type="text" id="cet_number" name="cet_number">
+                <label for="seat_allotted">Seat Allotted</label>
+                <select id="seat_allotted" name="seat_allotted">
+                    <option value="">--Select--</option>
+                    <option value="SNQ">SNQ</option><option value="GM">GM</option><option value="SC">SC</option><option value="ST">ST</option><option value="OBC">OBC</option><option value="GMR">GMR</option><option value="GMK">GMK</option><option value="KK / HK">KK / HK</option><option value="EWS">EWS</option><option value="SPL">SPL (NCC, SPORTS, DEFENCE, PWD)</option>
+                </select>
+                <label for="allotted_branch_kea">Allotted Branch</label>
+                <select id="allotted_branch_kea" name="allotted_branch_kea">
+                     <option value="">--Select--</option><option value="CSE">CSE</option><option value="AIML">AIML</option><option value="CS In (AIML)">CS In (AIML)</option><option value="CS (DS)">CS (DS)</option><option value="EC">EC</option><option value="CV">CV</option><option value="ME">ME</option>
+                </select>
+                <label for="cet_rank">CET Rank</label>
+                <input type="text" id="cet_rank" name="cet_rank">
+            </div>
+
+            <div id="managementFields" class="hidden">
+                <label for="allotted_branch_management">Directly Allotted Branch</label>
+                <select id="allotted_branch_management" name="allotted_branch_management">
+                    <option value="">--Select--</option><option value="CSE">CSE</option><option value="AIML">AIML</option><option value="CS In (AIML)">CS In (AIML)</option><option value="CS (DS)">CS (DS)</option><option value="EC">EC</option><option value="CV">CV</option><option value="ME">ME</option>
+                </select>
+            </div>
+            
+            <h3>Document Uploads</h3>
+            
+            <label for="photo">Passport Size Photo</label>
+            <input type="file" id="photo" name="photo" required>
+            
+            <label for="marks_card">Previous Marks Card</label>
+            <input type="file" id="marks_card" name="marks_card" required>
+            
+            <label for="aadhaar_front">Aadhaar Card (Front)</label>
+            <input type="file" id="aadhaar_front" name="aadhaar_front" required>
+            
+            <label for="aadhaar_back">Aadhaar Card (Back)</label>
+            <input type="file" id="aadhaar_back" name="aadhaar_back" required>
+            
+            <div id="casteIncomeSection">
+                <label for="caste_income">Caste & Income Certificate (if applicable)</label>
+                <input type="file" id="caste_income" name="caste_income">
+            </div>
 
             <button type="submit">Submit Application</button>
         </form>
     </div>
-    <!-- You would link to a separate JS file here for the conditional logic -->
     <script>
-        // Simple JS for showing/hiding conditional fields
         document.addEventListener('DOMContentLoaded', function() {
             const keaRadio = document.getElementById('kea');
             const managementRadio = document.getElementById('management');
@@ -114,8 +297,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     keaFields.classList.add('hidden');
                 }
             }
+
             if(keaRadio) keaRadio.addEventListener('change', toggleFields);
             if(managementRadio) managementRadio.addEventListener('change', toggleFields);
+            
+            // Initially hide them if neither is selected
+            if (keaFields && managementFields) {
+                if (!keaRadio.checked && !managementRadio.checked) {
+                    keaFields.classList.add('hidden');
+                    managementFields.classList.add('hidden');
+                }
+            }
         });
     </script>
 </body>
