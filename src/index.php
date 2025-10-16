@@ -171,7 +171,9 @@ HTML;
     </style>
 </head>
 <body>
-    <header> <button class="header-btn">College Details</button> </header>
+    <header>
+  <a href="/admin/php" class="header-btn">College Details</a>
+</header>
     <div class="container">
         <h1 class="animated-title">Vijay Vittal Institute of Technology</h1>
         <h2>Student Registration</h2>
