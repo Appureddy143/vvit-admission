@@ -10,12 +10,14 @@ if ($database_url === false) {
 $db_parts = parse_url($database_url);
 
 $host = $db_parts['host'];
-$port = $db_parts['port'];
+// Use the default PostgreSQL port 5432 if not specified in the URL
+$port = $db_parts['port'] ?? '5432'; 
 $dbname = ltrim($db_parts['path'], '/');
 $user = $db_parts['user'];
 $password = $db_parts['pass'];
 
-$dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+// Construct the DSN, adding the sslmode=require parameter which is essential for Neon
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
 try {
     $pdo = new PDO($dsn, $user, $password);
