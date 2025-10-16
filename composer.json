@@ -1,29 +1,6 @@
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "8080:80" # Map host port 8080 to container port 80
-    volumes:
-      - ./src:/var/www/html
-    depends_on:
-      - db
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=admissions_db
-      - DB_USER=admin
-      - DB_PASSWORD=secret
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=admissions_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secret
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+{
+    "require": {
+        "phpoffice/phpspreadsheet": "^2.1",
+        "tecnickcom/tcpdf": "^6.7"
+    }
+}
