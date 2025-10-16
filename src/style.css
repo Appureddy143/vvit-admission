@@ -1,0 +1,212 @@
+/* Import a handwriting font for the animation */
+@import url('https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap');
+
+/* Color Palette Definition */
+:root {
+    --space-cadet: #2b2d42;
+    --cool-gray: #8d99ae;
+    --antiflash-white: #edf2f4;
+    --red-pantone: #ef233c;
+    --fire-engine-red: #d90429;
+}
+
+/* General Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: 
+        linear-gradient(rgba(43, 45, 66, 0.7), rgba(43, 45, 66, 0.7)),
+        url('https://i.pinimg.com/736x/5f/b9/14/5fb91492c85a32312f4717cc5200b359.jpg');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+}
+
+/* Glassmorphism Effect for the Form Container */
+.container {
+    max-width: 700px;
+    margin: 20px auto;
+    background: rgba(141, 153, 174, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    border: 1px solid rgba(141, 153, 174, 0.2);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+}
+
+/* Header Styling */
+header {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+.header-btn {
+    padding: 8px 16px;
+    font-size: 0.9em;
+    border: none;
+    background-color: var(--cool-gray);
+    color: var(--space-cadet);
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+.header-btn:hover {
+    background-color: var(--antiflash-white);
+}
+
+/* Handwriting Animation */
+.animated-title {
+    font-family: 'Cedarville Cursive', cursive;
+    font-size: 2.5em;
+    text-align: center;
+    color: var(--antiflash-white);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: .15em solid var(--red-pantone);
+    margin: 0 auto 30px auto;
+    width: 0;
+    animation: typing 3.5s steps(40, end) forwards, blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: var(--red-pantone); }
+}
+
+/* Form Styling */
+h1, h2 {
+    text-align: center;
+    color: var(--antiflash-white);
+}
+h1 {
+    margin-top: 0;
+}
+h2 {
+    font-weight: 400;
+}
+label, fieldset legend {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--antiflash-white);
+}
+input[type="text"], input[type="date"], input[type="tel"], input[type="email"], select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid var(--cool-gray);
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    text-transform: uppercase;
+    background: rgba(43, 45, 66, 0.5);
+    color: var(--antiflash-white);
+}
+::placeholder {
+    color: var(--cool-gray);
+    opacity: 1;
+}
+
+fieldset {
+    border: 1px solid var(--cool-gray);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: var(--antiflash-white);
+}
+fieldset label {
+    display: inline-block;
+    margin-right: 20px;
+    font-weight: normal;
+}
+button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--fire-engine-red);
+    color: var(--antiflash-white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+button:hover {
+    opacity: 1;
+}
+button[type="submit"]:hover {
+    background-color: var(--red-pantone);
+}
+.note {
+    font-size: 0.9em;
+    color: var(--cool-gray);
+    margin-top: -15px;
+    margin-bottom: 15px;
+}
+.hidden {
+    display: none;
+}
+
+/* Custom File Input Styling */
+.file-input-wrapper {
+    margin-bottom: 20px;
+}
+.file-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 45px;
+}
+.file-input-container input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+.file-input-label {
+    background-color: var(--cool-gray);
+    color: var(--space-cadet);
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: background-color 0.3s;
+}
+.file-input-label:hover {
+    background-color: var(--antiflash-white);
+}
+.file-name {
+    margin-left: 15px;
+    color: var(--antiflash-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 430px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 20px;
+    }
+    .animated-title {
+        font-size: 1.8em;
+    }
+}
