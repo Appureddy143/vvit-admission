@@ -99,8 +99,94 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $stmt->execute();
 
-        echo "<h2>Form Submitted Successfully! Your Admission ID is: " . htmlspecialchars($studentId) . "</h2>";
-        // You can add links to generate PDF/Excel here later if needed
+        // Prepare WhatsApp link
+        $whatsapp_number = preg_replace('/[^0-9]/', '', $sanitized_post['mobile_number']);
+        // Assuming Indian numbers, add 91 if not present
+        if (strlen($whatsapp_number) == 10) {
+            $whatsapp_number = '91' . $whatsapp_number;
+        }
+        $whatsapp_message = urlencode("Thank you for registering with Vijay Vittal Institute of Technology. Your Admission ID is: " . $studentId);
+        $whatsapp_url = "https://wa.me/" . $whatsapp_number . "?text=" . $whatsapp_message;
+
+        // Output the success modal
+        echo <<<HTML
+        <style>
+            /* Add the same body background styles to the success page */
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: 
+                    linear-gradient(rgba(43, 45, 66, 0.7), rgba(43, 45, 66, 0.7)),
+                    url('https://i.pinimg.com/736x/5f/b9/14/5fb91492c85a32312f4717cc5200b359.jpg');
+                background-size: cover;
+                background-position: center;
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .success-modal {
+                max-width: 500px;
+                margin: 20px auto;
+                background: rgba(237, 242, 244, 0.95); /* Antiflash white with more opacity */
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 15px;
+                border: 1px solid rgba(141, 153, 174, 0.2);
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+                padding: 40px;
+                text-align: center;
+                color: #2b2d42; /* Space Cadet */
+            }
+            .success-modal h2 {
+                color: #2b2d42;
+                font-size: 2em;
+            }
+            .success-modal p {
+                font-size: 1.1em;
+            }
+            .admission-id {
+                font-size: 1.5em;
+                font-weight: bold;
+                color: #d90429; /* Fire Engine Red */
+                background: #fff;
+                padding: 10px 20px;
+                border-radius: 5px;
+                display: inline-block;
+                margin: 10px 0;
+                border: 1px solid #ddd;
+            }
+            .whatsapp-btn {
+                display: inline-block;
+                padding: 12px 25px;
+                margin-top: 20px;
+                background-color: #25D366; /* WhatsApp Green */
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+                font-size: 1.1em;
+            }
+            .whatsapp-btn:hover {
+                background-color: #128C7E;
+            }
+            .note {
+                font-size: 0.9em;
+                color: #8d99ae; /* Cool Gray */
+                margin-top: 25px;
+            }
+        </style>
+        <div class="success-modal">
+            <h2>✅ Success!</h2>
+            <p>Your application has been submitted successfully.</p>
+            <p>Your Admission ID is:</p>
+            <div class="admission-id">{$studentId}</div>
+            <a href="{$whatsapp_url}" target="_blank" class="whatsapp-btn">Send ID to my WhatsApp</a>
+            <p class="note">Please save this ID for future reference. You will need it to track your application status.</p>
+        </div>
+HTML;
 
     } catch (PDOException $e) {
         die("Database error: " . $e->getMessage());
