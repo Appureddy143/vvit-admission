@@ -1,141 +1,310 @@
 <?php
-// Ensure this file is not accessed directly without a session (for future security)
-require_once 'db.php';
-require_once 'vendor/autoload.php';
+/**
+ * ===================================================================
+ * SIMPLE FRONT CONTROLLER / ROUTER (Render-Compatible)
+ * ===================================================================
+ * This version works even if .htaccess is ignored by the host.
+ */
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Fpdf\Fpdf;
+// Get the requested URL path
+$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// --- EXCEL EXPORT LOGIC ---
-if (isset($_POST['export_excel'])) {
-    $year_short = htmlspecialchars($_POST['year']);
-    if (empty($year_short)) {
-        die("Please select a year to export.");
-    }
-
-    $prefix = "1VJ" . $year_short;
-
-    $stmt = $pdo->prepare("SELECT * FROM students WHERE student_id_text LIKE ? ORDER BY student_id_text ASC");
-    $stmt->execute([$prefix . '%']);
-    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (empty($students)) {
-        die("No records found for the year 20" . $year_short . ". <a href='/admin'>Go Back</a>");
-    }
-
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle('Admissions ' . $year_short);
-
-    $headers = array_keys($students[0]);
-    $column = 'A';
-    foreach ($headers as $header) {
-        $sheet->setCellValue($column . '1', $header);
-        $column++;
-    }
-
-    $row = 2;
-    foreach ($students as $student) {
-        $column = 'A';
-        foreach ($student as $value) {
-            $sheet->setCellValue($column . $row, $value);
-            $column++;
-        }
-        $row++;
-    }
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="admissions_20' . $year_short . '.xlsx"');
-    header('Cache-Control: max-age=0');
-
-    $writer = new Xlsx($spreadsheet);
-    $writer->save('php://output');
+// --- ROUTING FIX ---
+// If someone visits /admin, redirect safely to admin.php
+if ($request_uri === '/admin' || $request_uri === '/admin/') {
+    header('Location: /admin.php');
     exit;
 }
 
-// --- PDF EXPORT LOGIC ---
-if (isset($_POST['export_pdf'])) {
-    $student_id = htmlspecialchars($_POST['student_id']);
-    if (empty($student_id)) {
-        die("Please enter a Student ID to export.");
-    }
+// --- Main Registration Page ---
+require_once 'db.php';
 
-    $stmt = $pdo->prepare("SELECT * FROM students WHERE student_id_text = ?");
-    $stmt->execute([$student_id]);
-    $student = $stmt->fetch(PDO::FETCH_ASSOC);
+// --- Helper Functions ---
+function generateUniqueCode($pdo) {
+    $collegeCode = "1VJ";
+    $year = date("y");
 
-    if (!$student) {
-        die("No student found with ID: " . htmlspecialchars($student_id) . ". <a href='/admin'>Go Back</a>");
-    }
-
-    $pdf = new FPDF();
-    $pdf->AddPage();
-    $pdf->SetFont('Arial', 'B', 16);
-
-    if (!empty($student['photo_url']) && file_exists($student['photo_url'])) {
-        $pdf->Image($student['photo_url'], 10, 10, 30);
-    }
-    $pdf->Cell(0, 10, 'Vijay Vittal Institute of Technology', 0, 1, 'C');
-    $pdf->SetFont('Arial', '', 12);
-    $pdf->Cell(0, 10, 'Student Application Form', 0, 1, 'C');
-    $pdf->Ln(20);
-
-    $fields = [ 'Admission ID' => 'student_id_text', 'Student Name' => 'student_name', 'Date of Birth' => 'dob', "Father's Name" => 'father_name', 'Email' => 'email' ];
-    foreach ($fields as $label => $key) {
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 8, $label . ':', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 8, $student[$key] ?? 'N/A', 0, 1);
+    // Try to get accurate year via worldtimeapi
+    $time_json = @file_get_contents('http://worldtimeapi.org/api/timezone/Asia/Kolkata');
+    if ($time_json !== false) {
+        $time_data = json_decode($time_json, true);
+        if (isset($time_data['utc_datetime'])) {
+            $year = date("y", strtotime($time_data['utc_datetime']));
+        }
     }
     
-    $pdf->Output('D', 'application_' . $student_id . '.pdf');
-    exit;
+    $branch = $_POST['allotted_branch_kea'] ?? $_POST['allotted_branch_management'] ?? 'GEN';
+    $branch = strtoupper(htmlspecialchars($branch, ENT_QUOTES, 'UTF-8'));
+    $prefix = $collegeCode . $year . $branch;
+
+    $stmt = $pdo->prepare("SELECT student_id_text FROM students WHERE student_id_text LIKE ? ORDER BY id DESC LIMIT 1");
+    $stmt->execute([$prefix . '%']);
+    $lastIdRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $newNum = "001";
+    if ($lastIdRow) {
+        $lastNum = intval(substr($lastIdRow['student_id_text'], -3));
+        $newNum = str_pad($lastNum + 1, 3, '0', STR_PAD_LEFT);
+    }
+
+    return $prefix . $newNum;
 }
 
-// --- Display the HTML page if no action is taken ---
+// --- Handle Form Submission ---
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    $sanitized_post = [];
+    foreach ($_POST as $key => $value) {
+        $sanitized_post[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    if (empty($sanitized_post['student_name']) || empty($sanitized_post['email'])) {
+        die("Error: Student Name and Email are required fields.");
+    }
+    
+    $studentId = generateUniqueCode($pdo);
+    
+    $uploadDir = 'uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    $fileUrls = [];
+    foreach ($_FILES as $key => $file) {
+        if (isset($file['error']) && $file['error'] === UPLOAD_ERR_OK) {
+            $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $newFilename = $studentId . '_' . $key . '.' . $fileExtension;
+            $targetPath = $uploadDir . $newFilename;
+
+            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                $fileUrls[$key . '_url'] = $targetPath;
+            }
+        }
+    }
+
+    $dataToSave = array_merge($sanitized_post, $fileUrls, ['student_id_text' => $studentId]);
+
+    try {
+        $columns = array_keys($dataToSave);
+        $filtered_columns = array_filter($columns, fn($col) => preg_match('/^[a-zA-Z0-9_]+$/', $col));
+        $placeholders = array_map(fn($c) => ":$c", $filtered_columns);
+        
+        $sql = sprintf('INSERT INTO students (%s) VALUES (%s)', implode(', ', $filtered_columns), implode(', ', $placeholders));
+        $stmt = $pdo->prepare($sql);
+
+        foreach ($filtered_columns as $column) {
+            $stmt->bindValue(":$column", $dataToSave[$column]);
+        }
+        
+        $stmt->execute();
+
+        $whatsapp_number = preg_replace('/[^0-9]/', '', $sanitized_post['mobile_number']);
+        if (strlen($whatsapp_number) == 10) {
+            $whatsapp_number = '91' . $whatsapp_number;
+        }
+        $whatsapp_message = urlencode("Thank you for registering with Vijay Vittal Institute of Technology. Your Admission ID is: " . $studentId);
+        $whatsapp_url = "https://wa.me/" . $whatsapp_number . "?text=" . $whatsapp_message;
+
+        echo <<<HTML
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(rgba(43,45,66,0.7), rgba(43,45,66,0.7)), url('https://i.pinimg.com/736x/5f/b9/14/5fb91492c_85a32312f4717cc5200b359.jpg'); background-size: cover; background-position: center; min-height: 100vh; display: flex; justify-content: center; align-items: center; } 
+            .success-modal { max-width: 500px; background: rgba(237,242,244,0.95); padding: 40px; border-radius: 15px; text-align: center; color: #2b2d42; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+            .success-modal h2 { color: #2b2d42; }
+            .admission-id { font-size: 1.5em; font-weight: bold; color: #d90429; background: #fff; padding: 10px 20px; border-radius: 5px; display: inline-block; margin: 10px 0; border: 1px solid #ddd; }
+            .btn-group { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+            .btn { padding: 12px 25px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; }
+            .whatsapp-btn { background-color: #25D366; } .copy-btn { background-color: #8d99ae; } .finish-btn { background-color: #2b2d42; }
+        </style>
+        <div class="success-modal">
+            <h2>✅ Success!</h2>
+            <p>Your application has been submitted successfully.</p>
+            <p>Your Admission ID is:</p>
+            <div id="admissionId" class="admission-id">{$studentId}</div>
+            <div class="btn-group">
+                <a href="{$whatsapp_url}" target="_blank" class="btn whatsapp-btn">Send to WhatsApp</a>
+                <button id="copyBtn" class="btn copy-btn">Copy ID</button>
+                <button onclick="window.location.href='/'" class="btn finish-btn">Finish</button>
+            </div>
+            <p class="note">Please save this ID for future reference.</p>
+        </div>
+        <script>
+            document.getElementById('copyBtn').addEventListener('click', function() {
+                navigator.clipboard.writeText('{$studentId}').then(() => alert('Admission ID copied!'));
+            });
+        </script>
+HTML;
+
+    } catch (PDOException $e) {
+        die("Database error: " . $e->getMessage());
+    }
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VVIT Admin Panel</title>
-    <style>
-        :root { --space-cadet: #2b2d42; --cool-gray: #8d99ae; --antiflash-white: #edf2f4; --red-pantone: #ef233c; --fire-engine-red: #d90429; } body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--space-cadet); color: var(--antiflash-white); } .back-link { display: block; max-width: 860px; margin: 0 auto 20px auto; text-align: right; font-weight: bold; color: var(--antiflash-white); text-decoration: none; } .back-link:hover { text-decoration: underline; } .container { max-width: 800px; margin: 20px auto; padding: 30px; background: rgba(141, 153, 174, 0.1); border-radius: 15px; border: 1px solid rgba(141, 153, 174, 0.2); } h1, h2 { text-align: center; } .form-section { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--cool-gray); } .form-section:last-child { border-bottom: none; } label { display: block; margin-bottom: 8px; font-weight: 600; } input, select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid var(--cool-gray); background: rgba(43, 45, 66, 0.5); color: var(--antiflash-white); box-sizing: border-box; } button { padding: 12px 20px; border: none; border-radius: 5px; background-color: var(--fire-engine-red); color: var(--antiflash-white); font-weight: bold; cursor: pointer; width: 100%; font-size: 1.1em; } button:hover { background-color: var(--red-pantone); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vijay Vittal - Student Registration</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap');
+    :root { --space-cadet: #2b2d42; --cool-gray: #8d99ae; --antiflash-white: #edf2f4; --red-pantone: #ef233c; --fire-engine-red: #d90429; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(rgba(43,45,66,0.7), rgba(43,45,66,0.7)), url('https://i.pinimg.com/736x/5f/b9/14/5fb91492c85a32312f4717cc5200b359.jpg'); background-size: cover; background-position: center; min-height: 100vh; }
+    header { display: flex; justify-content: flex-end; padding: 15px; }
+    .header-btn { background-color: var(--cool-gray); color: var(--space-cadet); padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+    .header-btn:hover { background-color: var(--antiflash-white); }
+    .container { max-width: 700px; margin: 20px auto; background: rgba(141,153,174,0.1); backdrop-filter: blur(10px); border-radius: 15px; padding: 30px; }
+    .animated-title { font-family: 'Cedarville Cursive', cursive; font-size: 2.5em; color: var(--antiflash-white); text-align: center; border-right: .15em solid var(--red-pantone); white-space: nowrap; overflow: hidden; width: 0; margin-bottom: 30px; animation: typing 3.5s steps(40, end) forwards, blink-caret .75s step-end infinite; }
+    @keyframes typing { from { width: 0 } to { width: 100% } } @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--red-pantone); } }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--antiflash-white); }
+    input, select, textarea { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 5px; border: 1px solid var(--cool-gray); background: rgba(43,45,66,0.5); color: var(--antiflash-white); font-size: 1em; }
+    button[type="submit"] { width: 100%; padding: 15px; background-color: var(--fire-engine-red); color: var(--antiflash-white); border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    button[type="submit"]:hover { background-color: var(--red-pantone); }
+    .hidden { display: none; }
+    .floating-admin-btn { position: fixed; bottom: 20px; right: 20px; background-color: #ef233c; color: white; padding: 12px 18px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s, transform 0.2s; z-index: 1000; }
+    .floating-admin-btn:hover { background-color: #d90429; transform: scale(1.05); }
+</style>
 </head>
 <body>
-    <a href="/" class="back-link">&laquo; Back to Registration Form</a>
-    <div class="container">
-        <h1>VVIT Admin Dashboard</h1>
+<header>
+    <a href="/admin.php" class="header-btn">Admin Panel</a>
+</header>
+<div class="container">
+    <h1 class="animated-title">Vijay Vittal Institute of Technology</h1>
+    <h2 style="color:#edf2f4;text-align:center;">Student Registration</h2>
 
-        <div class="form-section">
-            <h2>Export Registrations to Excel</h2>
-            <form action="/admin" method="POST">
-                <label for="year">Select Admission Year:</label>
-                <select id="year" name="year" required>
-                    <option value="">-- Select Year --</option>
-                    <?php
-                        $current_year = date("y");
-                        for ($i = $current_year; $i >= $current_year - 5; $i--) {
-                            echo "<option value='{$i}'>20{$i}</option>";
-                        }
-                    ?>
-                </select>
-                <button type="submit" name="export_excel">Download Excel Sheet</button>
-            </form>
+    <form action="/" method="POST" enctype="multipart/form-data">
+        <label for="student_name">Student Name</label>
+        <input type="text" id="student_name" name="student_name" required>
+
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" name="dob" required>
+
+        <label for="father_name">Father's Name</label>
+        <input type="text" id="father_name" name="father_name" required>
+
+        <label for="mother_name">Mother's Name</label>
+        <input type="text" id="mother_name" name="mother_name" required>
+
+        <label for="mobile_number">Mobile Number</label>
+        <input type="tel" id="mobile_number" name="mobile_number" required>
+
+        <label for="parent_mobile_number">Father/Mother/Guardian Mobile Number</label>
+        <input type="tel" id="parent_mobile_number" name="parent_mobile_number" required>
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="permanent_address">Permanent Address</label>
+        <textarea id="permanent_address" name="permanent_address" rows="3" required></textarea>
+
+        <label for="previous_college">Previous Year College Name</label>
+        <input type="text" id="previous_college" name="previous_college" required>
+
+        <label for="previous_combination">Previous Year Combination</label>
+        <select id="previous_combination" name="previous_combination" required>
+            <option value="">--Select--</option>
+            <option value="PCMB">PCMB</option>
+            <option value="PCMC">PCMC</option>
+            <option value="DIPLOMA">DIPLOMA (Lateral Entry)</option>
+        </select>
+
+        <label for="category">Category</label>
+        <select id="category" name="category" required>
+            <option value="">--Select--</option>
+            <option value="CAT 1">CAT 1</option>
+            <option value="2A">2A</option>
+            <option value="2B">2B</option>
+            <option value="3A">3A</option>
+            <option value="3B">3B</option>
+            <option value="SC">SC</option>
+            <option value="ST">ST</option>
+            <option value="NOT APPLICABLE">NOT APPLICABLE</option>
+        </select>
+
+        <label for="sub_caste">Sub Caste</label>
+        <input type="text" id="sub_caste" name="sub_caste" required>
+
+        <fieldset>
+            <legend style="color:white;">Admission Through</legend>
+            <input type="radio" id="kea" name="admission_through" value="KEA" required>
+            <label for="kea">KEA</label>
+            <input type="radio" id="management" name="admission_through" value="MANAGEMENT">
+            <label for="management">MANAGEMENT</label>
+        </fieldset>
+
+        <div id="keaFields" class="hidden">
+            <label for="cet_number">CET Number</label>
+            <input type="text" id="cet_number" name="cet_number">
+            <label for="allotted_branch_kea">Allotted Branch</label>
+            <select id="allotted_branch_kea" name="allotted_branch_kea">
+                <option value="">--Select--</option>
+                <option value="CSE">CSE</option>
+                <option value="AIML">AIML</option>
+                <option value="CS (DS)">CS (DS)</option>
+                <option value="EC">EC</option>
+                <option value="CV">CV</option>
+                <option value="ME">ME</option>
+            </select>
+            <label for="cet_rank">CET Rank</label>
+            <input type="text" id="cet_rank" name="cet_rank">
         </div>
 
-        <div class="form-section">
-            <h2>Download Student Application PDF</h2>
-            <form action="/admin" method="POST">
-                <label for="student_id">Enter Student Admission ID:</label>
-                <input type="text" id="student_id" name="student_id" placeholder="e.g., 1VJ25CSE001" required>
-                <button type="submit" name="export_pdf">Download Application PDF</button>
-            </form>
+        <div id="managementFields" class="hidden">
+            <label for="allotted_branch_management">Directly Allotted Branch</label>
+            <select id="allotted_branch_management" name="allotted_branch_management">
+                <option value="">--Select--</option>
+                <option value="CSE">CSE</option>
+                <option value="AIML">AIML</option>
+                <option value="CS (DS)">CS (DS)</option>
+                <option value="EC">EC</option>
+                <option value="CV">CV</option>
+                <option value="ME">ME</option>
+            </select>
         </div>
-    </div>
+
+        <h3 style="color:#edf2f4;">Document Uploads</h3>
+        <label for="photo">Passport Size Photo</label>
+        <input type="file" id="photo" name="photo" required>
+
+        <label for="marks_card">Previous Marks Card</label>
+        <input type="file" id="marks_card" name="marks_card" required>
+
+        <label for="aadhaar_front">Aadhaar Card (Front)</label>
+        <input type="file" id="aadhaar_front" name="aadhaar_front" required>
+
+        <label for="aadhaar_back">Aadhaar Card (Back)</label>
+        <input type="file" id="aadhaar_back" name="aadhaar_back" required>
+
+        <label for="caste_income">Caste & Income Certificate (if applicable)</label>
+        <input type="file" id="caste_income" name="caste_income">
+
+        <button type="submit">Submit Application</button>
+    </form>
+</div>
+
+<a href="/admin.php" class="floating-admin-btn">🔑 Admin</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const kea = document.getElementById('kea');
+    const mgmt = document.getElementById('management');
+    const keaFields = document.getElementById('keaFields');
+    const mgmtFields = document.getElementById('managementFields');
+
+    function toggle() {
+        if (kea.checked) {
+            keaFields.classList.remove('hidden');
+            mgmtFields.classList.add('hidden');
+        } else if (mgmt.checked) {
+            mgmtFields.classList.remove('hidden');
+            keaFields.classList.add('hidden');
+        }
+    }
+
+    kea.addEventListener('change', toggle);
+    mgmt.addEventListener('change', toggle);
+});
+</script>
 </body>
 </html>
-
